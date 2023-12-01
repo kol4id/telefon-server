@@ -10,27 +10,34 @@ import { FastifyRequest } from 'fastify';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import fastifyMultipart from '@fastify/multipart';
 import { buffer } from 'stream/consumers';
+import { CompressService } from 'src/compress/compress.service';
 
 @Controller('channels')
 export class ChannelsController {
-    constructor(private readonly channelsService: ChannelsService, private readonly cloudGallary: CloudinaryService){}
+    constructor(
+        private readonly channelsService: ChannelsService, 
+        private readonly cloudinaryService: CloudinaryService,
+        private readonly compressService: CompressService,
+    ){}
 
     @Get()
     defaultResponce(){
-        this.cloudGallary.FindImageById('579f06216c05433b08d7ce2031995ee1');
+        this.cloudinaryService.FindImageById('579f06216c05433b08d7ce2031995ee1');
         return 'hi there!';
     }
 
     @Post('media')
     async getChannelWithMedia(@Request() request: FastifyRequest): Promise<string>{
         const data = await request.file();
-        let buffer: Buffer;
-        try {
-            buffer = await data.toBuffer();
-        } catch (error: unknown){
-            throw new PayloadTooLargeException("file size reach limit");
-        }
-        const result = await this.cloudGallary.UploadImageByFile(buffer);
+        let img: Buffer;
+        
+            const buffer = await data.toBuffer();
+            console.log('passed1');
+            img = await this.compressService.CompressImageFromBuffer(buffer);
+            console.log('passed2');
+        
+        const result = await this.cloudinaryService.UploadImageByFile(img);
+        console.log('passed3');
         return result.secure_url;
     }
 
