@@ -6,7 +6,7 @@ export class CompressService {
     async CompressImageFromBuffer(img: Buffer): Promise<Buffer>{
         // let compressedImage: Buffer;
         console.log(img)
-        const compressedImage: Buffer = await sharp(img).resize(1280,720).jpeg({quality:72}).toBuffer()
+        const compressedImage: Buffer = await sharp(img).resize(1280,720).webp({quality:70}).toBuffer()
         console.log(compressedImage)
         return compressedImage;
     }
