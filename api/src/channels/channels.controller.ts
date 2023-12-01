@@ -31,13 +31,14 @@ export class ChannelsController {
         const data = await request.file();
         let img: Buffer;
         
+        try {
             const buffer = await data.toBuffer();
-            console.log('passed1');
             img = await this.compressService.CompressImageFromBuffer(buffer);
-            console.log('passed2');
+        } catch (error: unknown){
+            throw new PayloadTooLargeException('file is too large')
+        }
         
         const result = await this.cloudinaryService.UploadImageByFile(img);
-        console.log('passed3');
         return result.secure_url;
     }
 
