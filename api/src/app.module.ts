@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ChannelsModule } from './channels/channels.module';
 import { ConfigModule } from '@nestjs/config';
+import { CloudinaryModule } from './cloudinary/сloudinary.module';
 
 @Module({
   imports: [ 
@@ -14,7 +15,8 @@ import { ConfigModule } from '@nestjs/config';
       envFilePath: '.env',
       isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.db_URI)
+    MongooseModule.forRoot(process.env.db_URI),
+    CloudinaryModule
   ],
   controllers: [AppController],
   providers: [AppService],

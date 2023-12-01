@@ -4,13 +4,16 @@ import { ChannelsController } from './channels.controller';
 import { ChannelsService } from './channels.service';
 import { Channel, ChannelSchema } from './schemas/channels.schema';
 import { AuthModule } from 'src/auth/auth.module';
+import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
+import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 
 @Module({
   imports: [
     AuthModule,  
+    CloudinaryModule,
     MongooseModule.forFeature([{name: Channel.name, schema: ChannelSchema}])
   ],
   controllers: [ChannelsController],
-  providers: [ChannelsService]
+  providers: [ChannelsService, CloudinaryService]
 })
 export class ChannelsModule {}

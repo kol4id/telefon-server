@@ -1,5 +1,6 @@
+import { Optional } from "@nestjs/common";
+import { Prop } from "@nestjs/mongoose";
 import { IsNotEmpty, IsOptional, IsString, IsArray, ArrayNotEmpty, IsEmpty } from "class-validator";
-import { IMessage } from "../utils";
 import { User } from "src/auth/schemas/user.schema";
 
 export class CreateChannelDto {
@@ -7,13 +8,17 @@ export class CreateChannelDto {
     @IsString()
     readonly title: string;
 
-    @IsNotEmpty()
-    @IsString()
-    readonly content: string;
+    @Prop()
+    @Optional()
+    img: Buffer;
 
-    @IsOptional()
-    @IsArray()
-    readonly messages: IMessage[];
+    @Prop()
+    @Optional()
+    description: string
+
+    @Prop()
+    @Optional()
+    subscribers: number
 
     @IsEmpty({message: 'you cannot pass user id'})
     readonly creatorId: User
