@@ -29,6 +29,7 @@
     "@nestjs/passport": "^10.0.2",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-fastify": "^10.2.9",
+    "@types/fastify-multipart": "^0.7.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "class-transformer": "^0.5.1",

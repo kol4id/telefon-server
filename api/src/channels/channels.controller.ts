@@ -8,9 +8,11 @@ import { Query as IQuery } from 'express-serve-static-core';
 import { AuthGuard } from '@nestjs/passport';
 import { FastifyRequest } from 'fastify';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
-import fastifyMultipart from '@fastify/multipart';
-import { buffer } from 'stream/consumers';
+
 import { CompressService } from 'src/compress/compress.service';
+import HandleMultipart from 'src/utils/fastify-multipart-toBuffer';
+
+
 
 @Controller('channels')
 export class ChannelsController {
@@ -26,20 +28,17 @@ export class ChannelsController {
         return 'hi there!';
     }
 
-    @Post('media')
-    async getChannelWithMedia(@Request() request: FastifyRequest): Promise<string>{
-        const data = await request.file();
-        let img: Buffer;
-        
-        try {
-            const buffer = await data.toBuffer();
-            img = await this.compressService.CompressImageFromBuffer(buffer);
-        } catch (error: unknown){
-            throw new PayloadTooLargeException('file is too large')
-        }
-        
-        const result = await this.cloudinaryService.UploadImageByFile(img);
-        return result.secure_url;
+    @Post('media:channelId')
+    @UseGuards(AuthGuard('jwt'))
+    async UpdateChannelPhoto(
+        @Query('channelId') channelId: string,
+        @Req() request: FastifyRequest,
+        @Req() req,
+    ): Promise<Channel>{
+        const fileData: Buffer = await HandleMultipart(request);
+
+        const result = await this.cloudinaryService.UploadImageByFile(fileData);        
+        return this.channelsService.updatePhoto(result , req.user, channelId)      
     }
 
     @Get('all')
@@ -62,16 +61,17 @@ export class ChannelsController {
     }
 
     @Put(':id')
+    @UseGuards(AuthGuard('jwt'))
     async updateChannelById(
-        @Param('id') id: string,
         @Body() channel: UpdateChannelDto,
+        @Req() req,
     ): Promise<Channel>{
         console.log(channel)
-        return this.channelsService.updateById(id, channel);
+        return this.channelsService.updateById(channel, req.user);
     }
     
     @Post()
-    @UseGuards(AuthGuard())
+    @UseGuards(AuthGuard('jwt'))
     async createChannel(
         @Body() channel: CreateChannelDto,
         @Req() req,

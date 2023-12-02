@@ -8,18 +8,18 @@ export class CreateChannelDto {
     @IsString()
     readonly title: string;
 
-    @Prop()
     @Optional()
-    img: Buffer;
+    readonly imgUrl: string;
 
-    @Prop()
     @Optional()
-    description: string
+    readonly description: string;
 
-    @Prop()
     @Optional()
-    subscribers: number
+    readonly subscribers: number;
+
+    @Optional()
+    readonly moderatorsId: string[];
 
     @IsEmpty({message: 'you cannot pass user id'})
-    readonly creatorId: User
+    readonly creatorId: User;
 }

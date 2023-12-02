@@ -7,6 +7,8 @@ import { AuthModule } from 'src/auth/auth.module';
 import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { CompressService } from 'src/compress/compress.service';
+import { ParseObjectPipe } from './pipes/parse-object.pipe';
+
 
 @Module({
   imports: [
@@ -15,6 +17,6 @@ import { CompressService } from 'src/compress/compress.service';
     MongooseModule.forFeature([{name: Channel.name, schema: ChannelSchema}])
   ],
   controllers: [ChannelsController],
-  providers: [ChannelsService, CloudinaryService, CompressService]
+  providers: [ChannelsService, CloudinaryService, CompressService, ParseObjectPipe]
 })
 export class ChannelsModule {}

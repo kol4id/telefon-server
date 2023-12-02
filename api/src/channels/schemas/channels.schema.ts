@@ -15,7 +15,7 @@ export class Channel{
 
     @Prop()
     @Optional()
-    img: Buffer;
+    imgUrl: string;
 
     @Prop()
     @Optional()
@@ -24,6 +24,10 @@ export class Channel{
     @Prop()
     @Optional()
     subscribers: number
+
+    @Prop()
+    @Optional()
+    moderatorsId: string[]
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
     creatorId: User;

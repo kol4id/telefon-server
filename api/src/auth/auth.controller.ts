@@ -8,14 +8,15 @@ export class AuthController {
     constructor( private authService: AuthService ) {}
 
     @Post('/signup')
-    signupUser(
+    async signupUser(
         @Body() signupData: SignupUserDto
-    ): Promise<{token: string}>{
-        return this.authService.signupUser(signupData);
+    ): Promise<void>{
+        console.log(signupData)
+        // return this.authService.signupUser(signupData);
     }
 
     @Get('/login')
-    loginUsers(
+    async loginUsers(
         @Query() loginData: LoginUserDto
     ): Promise<{token: string}>{
         return this.authService.loginUser(loginData);
