@@ -37,13 +37,14 @@ export class AuthService {
 
     async signupUser(signupData: SignupUserDto, response: FastifyReply): Promise<{token: string}>{
         const {name, email, subscriptions, password} = signupData;
-        const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS));
-        const hashedPassword = await bcrypt.hash(password, salt);
 
         if (await this.userModel.findOne({email})){
             throw new UnauthorizedException("user already exist");
         }
-
+        
+        const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS));
+        const hashedPassword = await bcrypt.hash(password, salt);
+ 
         const user = await this.userModel.create({
             name,
             email,
