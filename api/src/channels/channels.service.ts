@@ -16,12 +16,7 @@ export class ChannelsService {
     }
 
     async findAllForUser(user: UserDto): Promise<Channel[]>{
-        console.log(user)
-        let userSubs: string[] = user.subscriptions;
-        console.log(userSubs[0])
-        userSubs = {...user.subscriptions}
-        console.log(userSubs)
-        user
+
         return await this.channelModel.find({ _id: {$in: user.subscriptions}});
     }
     
