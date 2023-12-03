@@ -14,6 +14,16 @@ export class ChannelsService {
     async findAll(query: Query): Promise<Channel[]> {
         return await this.channelModel.find();
     }
+
+    async findAllForUser(user: UserDto): Promise<Channel[]>{
+        console.log(user)
+        let userSubs: string[] = user.subscriptions;
+        console.log(userSubs[0])
+        userSubs = {...user.subscriptions}
+        console.log(userSubs)
+        user
+        return await this.channelModel.find({ _id: {$in: user.subscriptions}});
+    }
     
     async findById(id: string): Promise<Channel>{
         const channel = await this.channelModel.findById(id);

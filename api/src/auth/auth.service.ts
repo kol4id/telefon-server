@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt'
 import { JwtService } from '@nestjs/jwt';
 import { SignupUserDto } from './dto/signup.dto';
 import { LoginUserDto } from './dto/login.dto';
+import { FastifyReply } from 'fastify';
 
 @Injectable()
 export class AuthService {
@@ -14,8 +15,28 @@ export class AuthService {
         private jwtService: JwtService,
     ){}
 
-    async signupUser(signupData: SignupUserDto): Promise<{token: string}>{
-        const {name, email, password} = signupData;
+    async getAccessTokenAsync(id: string): Promise<string>{
+        return await this.jwtService.signAsync(
+            {id},
+            {
+                secret: process.env.JWT_SECRET,
+                expiresIn: process.env.JWT_EXPIRED,
+            }
+        )
+    }
+
+    async getRefreshTokenAsync(id: string): Promise<string>{
+        return await this.jwtService.signAsync(
+            {id},
+            {
+                secret: process.env.JWT_REFRESH_SECRET,
+                expiresIn: process.env.JWT_REFRESH_EXPIRED,
+            }
+        )
+    }
+
+    async signupUser(signupData: SignupUserDto, response: FastifyReply): Promise<{token: string}>{
+        const {name, email, subscriptions, password} = signupData;
         const salt = bcrypt.genSaltSync(Number(process.env.SALT_ROUNDS));
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -26,6 +47,7 @@ export class AuthService {
         const user = await this.userModel.create({
             name,
             email,
+            subscriptions,
             password: hashedPassword
         })
 
@@ -34,7 +56,7 @@ export class AuthService {
         return {token}
     }
 
-    async loginUser(loginData: LoginUserDto): Promise<{token: string}>{
+    async loginUser(loginData: LoginUserDto, response: FastifyReply): Promise<{token: string}>{
         const {email, password} = loginData;
         
         const user = await this.userModel.findOne({email})
@@ -48,6 +70,10 @@ export class AuthService {
         }
 
         const token = this.jwtService.sign({ id: user._id})
+        response.setCookie('accessToken', token, {
+            httpOnly: true,
+            signed: true,
+        })
         return {token}
     }
 

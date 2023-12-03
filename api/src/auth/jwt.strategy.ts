@@ -20,12 +20,13 @@ export class JwtStrategy extends PassportStrategy(Strategy){
     async validate(payload){
         const {id} = payload;
         const userData = await this.userModel.findById(id);
-
         if (!userData){
             throw new UnauthorizedException('Login first');  
         }
-        const user = {id, ...userData};
 
+        const userObj = userData.toObject({ getters: true })
+        const user = {id, ...userObj};
+        console.log(user.subscriptions)
         return user
     }
 }

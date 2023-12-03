@@ -1,3 +1,4 @@
+import { Optional } from "@nestjs/common";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
 import { Document } from "mongoose"
 
@@ -6,12 +7,16 @@ import { Document } from "mongoose"
 })
 export class User extends Document{
     @Prop()
-    name: string
+    name: string;
 
     @Prop({unique: [true, 'Duplicate email entered']})
-    email: string
+    email: string;
     
     @Prop()
-    password: string
+    @Optional()
+    subscriptions: string[];
+
+    @Prop()
+    password: string;
 }
 export const UserSchema = SchemaFactory.createForClass(User)
