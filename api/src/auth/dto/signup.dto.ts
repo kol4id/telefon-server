@@ -10,9 +10,6 @@ export class SignupUserDto {
     @IsEmail({}, {message: 'Please enter correct email'})
     readonly email: string;
 
-    @Optional()
-    readonly subscriptions: string[]
-
     @IsNotEmpty()
     @IsString()
     @MinLength(6)
