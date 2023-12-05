@@ -3,7 +3,8 @@ import { AuthService } from './auth.service';
 import { SignupUserDto } from './dto/signup.dto';
 import { LoginUserDto } from './dto/login.dto';
 import { FastifyReply } from 'fastify';
-import { Res } from '@nestjs/common/decorators';
+import { Req, Res, UseGuards } from '@nestjs/common/decorators';
+import { CookieRefreshGuard } from './cookie-refresh.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -13,7 +14,7 @@ export class AuthController {
     async signupUser(
         @Body() signupData: SignupUserDto,
         @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<{token: string}>{
+    ): Promise<void>{
     
         return this.authService.signupUser(signupData, response);
     }
@@ -22,9 +23,19 @@ export class AuthController {
     async loginUsers(
         @Query() loginData: LoginUserDto,
         @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<{token: string}>{
+    ): Promise<void>{
     
         return await this.authService.loginUser(loginData, response);
-    } 
+    }
+    
+    @Get('/refresh')
+    @UseGuards(CookieRefreshGuard)
+    async refreshUsers(
+        @Req() res,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<void>{
+ 
+        return await this.authService.refreshUser(res.user, response);
+    }
 }
 

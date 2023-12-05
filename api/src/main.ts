@@ -13,8 +13,9 @@ async function bootstrap() {
 
   await app.register(fastifyCookie, {
     secret: process.env.COOKIE_SECRET,
+    parseOptions: {},     // options for parsing cookies
   });
-  app.register(require('@fastify/multipart'))
+  await app.register(require('@fastify/multipart'))
   await app.listen(4200);
 }
 bootstrap();

@@ -5,14 +5,14 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 
 import { Query as IQuery } from 'express-serve-static-core'; 
-import { AuthGuard } from '@nestjs/passport';
 import { FastifyRequest } from 'fastify';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import HandleMultipart from 'src/utils/fastify-multipart-toBuffer';
+import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
+import { CookieRefreshGuard } from 'src/auth/cookie-refresh.guard';
 
-
+@UseGuards(CookieAccessGuard)
 @Controller('channels')
-@UseGuards(AuthGuard('jwt'))
 export class ChannelsController {
     constructor(
         private readonly channelsService: ChannelsService, 
@@ -46,7 +46,7 @@ export class ChannelsController {
         return await this.channelsService.create(channel, req.user);
     }
 
-    @Put(':id')
+    @Put('id')
     async updateChannelById(
         @Body() channel: UpdateChannelDto,
         @Req() req,

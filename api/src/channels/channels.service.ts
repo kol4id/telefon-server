@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { Query } from 'express-serve-static-core';
 import { User } from 'src/auth/schemas/user.schema';
 import { UpdateChannelDto } from './dto/update-channel.dto';
-import { UserDto } from 'src/auth/dto/user.dto';
+import { UserDto } from 'src/mongo/dto/user.dto';
 
 @Injectable()
 export class ChannelsService {
@@ -40,7 +40,7 @@ export class ChannelsService {
             throw new ForbiddenException('You do not have such access rights')
         }
 
-        return await this.channelModel.findByIdAndUpdate(channelData.id, channel, {
+        return await this.channelModel.findByIdAndUpdate(channelData.id, channelData, {
             runValidators: true,
             new: true,
         });

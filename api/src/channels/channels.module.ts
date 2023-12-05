@@ -6,17 +6,20 @@ import { Channel, ChannelSchema } from './schemas/channels.schema';
 import { AuthModule } from 'src/auth/auth.module';
 import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
-import { CompressService } from 'src/compress/compress.service';
-import { ParseObjectPipe } from './pipes/parse-object.pipe';
-
+import { CompressModule } from 'src/compress/compress.module';
+import { TokenModule } from 'src/token/token.module';
+import { MongoModule } from 'src/mongo/mongo.module';
 
 @Module({
   imports: [
     AuthModule,  
     CloudinaryModule,
+    CompressModule,
+    TokenModule,
+    MongoModule,
     MongooseModule.forFeature([{name: Channel.name, schema: ChannelSchema}])
   ],
   controllers: [ChannelsController],
-  providers: [ChannelsService, CloudinaryService, CompressService, ParseObjectPipe]
+  providers: [ChannelsService, CloudinaryService]
 })
 export class ChannelsModule {}
