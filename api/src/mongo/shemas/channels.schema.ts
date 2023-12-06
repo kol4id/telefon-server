@@ -19,15 +19,19 @@ export class Channel{
 
     @Prop()
     @Optional()
-    description: string
+    description: string;
 
     @Prop()
     @Optional()
-    subscribers: number
+    subscribers: number;
 
     @Prop()
     @Optional()
-    moderatorsId: string[]
+    moderatorsId: string[];
+
+    @Prop()
+    @Optional()
+    lastMessageId: string;
 
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
     creatorId: User;

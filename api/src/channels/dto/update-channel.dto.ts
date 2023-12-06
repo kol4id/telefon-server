@@ -20,6 +20,9 @@ export class UpdateChannelDto {
 
     @Optional()
     readonly moderatorsId: string[];
+
+    @Optional()
+    readonly lastMessageId: string;
     
     @IsEmpty({message: 'you cannot pass user id'})
     readonly creatorId: User;

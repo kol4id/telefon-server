@@ -6,6 +6,7 @@ import { Query } from 'express-serve-static-core';
 import { User } from 'src/auth/schemas/user.schema';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { UserDto } from 'src/mongo/dto/user.dto';
+import { CreateChannelDto } from './dto/create-channel.dto';
 
 @Injectable()
 export class ChannelsService {
@@ -64,7 +65,7 @@ export class ChannelsService {
         // return await this.channelModel.findByIdAndUpdate()
     }
 
-    async create(channel: Channel, user: User): Promise<Channel>{
+    async create(channel: CreateChannelDto, user: User): Promise<Channel>{
         const data = Object.assign(channel, {creatorId: user._id})
 
         return await this.channelModel.create(data);
