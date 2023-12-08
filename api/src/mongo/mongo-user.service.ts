@@ -95,7 +95,7 @@ export class MongoUserService {
         return {id: String(userData._id)};
     }
 
-    async updateById(user: UserDto): Promise<boolean>{
+    async update(user: UserDto): Promise<boolean>{
         const userData = await this.userModel.findByIdAndUpdate(user.id, user, {
             runValidators: true,
         })

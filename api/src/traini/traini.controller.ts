@@ -1,12 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
+import { MongoChannelService } from 'src/mongo/mongo-channel.service';
 import { MongoUserService } from 'src/mongo/mongo-user.service';
 
 @Controller('traini')
 export class TrainiController {
-    constructor(private mongoUserService: MongoUserService ){}
+    constructor(
+        private mongoUserService: MongoUserService,
+        private mongoChannelService: MongoChannelService,
+    ){}
 
     @Get()
     async traini(){
-        this.mongoUserService.findById('656a76704a5e300b8da9409e')
+        const user = await this.mongoUserService.findById('656ba456d616847368ffc143');
+        return this.mongoChannelService.findAllForUser(user);
     }
 }
