@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common'
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import fastifyCookie = require('@fastify/cookie');
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
@@ -10,6 +11,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe())
   app.setGlobalPrefix('api');
   app.enableCors();
+
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   await app.register(fastifyCookie, {
     secret: process.env.COOKIE_SECRET,
