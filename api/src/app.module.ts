@@ -10,6 +10,7 @@ import { CompressModule } from './compress/compress.module';
 import { MongoModule } from './mongo/mongo.module';
 import { TrainiModule } from './traini/traini.module';
 import { TokenModule } from './token/token.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [ 
@@ -24,7 +25,8 @@ import { TokenModule } from './token/token.module';
     CompressModule,
     MongoModule,
     TrainiModule,
-    TokenModule
+    TokenModule,
+    RealtimeModule
   ],
   controllers: [AppController],
   providers: [AppService],
