@@ -4,6 +4,7 @@ import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify
 import { AppModule } from './app.module';
 import fastifyCookie = require('@fastify/cookie');
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { SocketIOAdapter } from './realtime/socket-io-adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
@@ -12,7 +13,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors();
 
-  app.useWebSocketAdapter(new IoAdapter(app));
+  app.useWebSocketAdapter(new SocketIOAdapter(app));
 
   await app.register(fastifyCookie, {
     secret: process.env.COOKIE_SECRET,
