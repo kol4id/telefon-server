@@ -1,26 +1,24 @@
-import { UseGuards } from '@nestjs/common';
-import { ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Redis } from 'ioredis';
 import { Server, Socket } from 'socket.io';
-import { WSJwtGuard } from 'src/auth/web-sockets.guard';
+import { ServerToClientEvent } from './events';
+import { SocketWithAuth } from './socket-io-adapter';
 
 @WebSocketGateway()
-@UseGuards(WSJwtGuard)
-export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect{
+export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit{
   @WebSocketServer()
-  server: Server;
+  server: Server<any, ServerToClientEvent>;
 
   afterInit(client: Socket){
-    client.use((req, next) => {
-
-    })
+    // client.use((this.socketMiddleware.SocketAuthMiddleWare() as any))
+    console.log('started')
   }
 
   private readonly redisClient = new Redis({
     port: 6000,
   });
 
-  handleConnection(client: Socket){
+  handleConnection(client: SocketWithAuth){
 
     console.log(`Client connected ${client.id}`)
     this.server.to(client.id).emit('personalMessage', 'Hiiii')
@@ -29,7 +27,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   }
 
-  handleDisconnect(client: Socket){
+  handleDisconnect(client: SocketWithAuth){
     console.log(`Client disconected ${client.id}`)
     this.server.to(client.id).emit('personalMessage', 'By By')
   }
@@ -38,6 +36,6 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleMessage(client: Socket, payload: any): void {
     console.log(`Recived message from ${client.id}: ${payload}`)
     this.server.to(client.id).emit('personalMessage', 'Privet!')
-    this.server.emit('personalMessage', payload)
+    //this.server.emit('personalMessage', payload)
   }
 }
