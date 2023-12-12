@@ -43,7 +43,8 @@ export class SocketIOAdapter extends IoAdapter{
 
                 try {
                     const parsedToken = token.split(' ')[1];
-                    socket.userId = await tokenService.VerifyTokenAsync(parsedToken, 'access');
+                    const data =  await tokenService.VerifyTokenAsync(parsedToken, 'access');
+                    socket.userId = String(data.id)
                     next();
                 } catch (error) {
                     next(new Error('Unauthorized, '))
