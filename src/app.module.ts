@@ -11,6 +11,7 @@ import { MongoModule } from './mongo/mongo.module';
 import { TrainiModule } from './traini/traini.module';
 import { TokenModule } from './token/token.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [ 
@@ -26,7 +27,8 @@ import { RealtimeModule } from './realtime/realtime.module';
     MongoModule,
     TrainiModule,
     TokenModule,
-    RealtimeModule
+    RealtimeModule,
+    MessagesModule
   ],
   controllers: [AppController],
   providers: [AppService],
