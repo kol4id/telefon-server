@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Channel } from "./shemas/channels.schema";
+import { Channel } from "./shemas/channel.schema";
 import { Model } from "mongoose";
 import { ChannelDto } from "./dto/channel.dto";
 import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
@@ -46,7 +46,7 @@ export class MongoChannelService {
             await this.channelModel.create(data);
             return(true);
         } catch(error){
-            throw new ServiceUnavailableException("Something went wrong when creating channel") 
+            throw new InternalServerErrorException("Something went wrong when creating channel") 
         }
     }
 
