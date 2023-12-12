@@ -5,7 +5,7 @@ import { CookieRefreshGuard } from './cookie-refresh.guard';
 import { CookieAccessGuard } from './cookie-access.guard';
 import { MongoModule } from 'src/mongo/mongo.module';
 import { TokenModule } from 'src/token/token.module';
-import { SocketMiddleware } from './web-sockets.mw';
+
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { SocketMiddleware } from './web-sockets.mw';
     MongoModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, CookieRefreshGuard, CookieAccessGuard, SocketMiddleware],
-  exports: [AuthService, CookieRefreshGuard, CookieAccessGuard, SocketMiddleware],
+  providers: [AuthService, CookieRefreshGuard, CookieAccessGuard],
+  exports: [AuthService, CookieRefreshGuard, CookieAccessGuard],
 })
 export class AuthModule {}

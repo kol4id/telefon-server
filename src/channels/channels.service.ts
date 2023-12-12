@@ -1,74 +1,125 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import {InjectModel} from '@nestjs/mongoose';
-import { Channel } from './schemas/channels.schema';
-import { Model } from 'mongoose';
-import { Query } from 'express-serve-static-core';
-import { User } from 'src/auth/schemas/user.schema';
-import { UpdateChannelDto } from './dto/update-channel.dto';
+import { ForbiddenException, Injectable, InternalServerErrorException} from '@nestjs/common';
 import { UserDto } from 'src/mongo/dto/user.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
+import { MongoChannelService } from 'src/mongo/mongo-channel.service';
+import { ChannelDto } from 'src/mongo/dto/channel.dto';
+import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
 
 @Injectable()
 export class ChannelsService {
-    constructor(@InjectModel(Channel.name) private channelModel: Model<Channel>) {}
+    constructor(private mongoChannelService: MongoChannelService) {}
+    // @InjectModel(Channel.name) private channelModel: Model<Channel>
+    // async findAll(query: Query): Promise<Channel[]> {
 
-    async findAll(query: Query): Promise<Channel[]> {
-        return await this.channelModel.find();
+        
+    // }
+
+    async findAllForUser(user: UserDto): Promise<ChannelDto[]>{
+
+        return await this.mongoChannelService.findMultipleChannelsById(user.subscriptions);
     }
 
-    async findAllForUser(user: UserDto): Promise<Channel[]>{
+    async create(channelData: CreateChannelDto, user: UserDto): Promise<boolean>{
 
-        return await this.channelModel.find({ _id: {$in: user.subscriptions}});
+        return this.mongoChannelService.create(channelData, user.id)
+    }
+
+    async updateGeneral(channelParams: UpdateChannelDto, user: UserDto): Promise<UpdateChannelDto> {
+        const channel = await this.mongoChannelService.findById(channelParams.id);
+
+        if(channel.creatorId !== user.id){
+            throw new ForbiddenException('You do not have such access rights')
+        }
+ 
+        const updatedChannel = await this.mongoChannelService.update(channelParams)
+
+        if(!updatedChannel){
+            throw new InternalServerErrorException("DB: Something went wrong when updating channel last activity")
+        }
+
+        return channelParams;        
+    }
+
+    async addModerator(channelParams: UpdateChannelModeratorDto, user: UserDto): Promise<UpdateChannelModeratorsDto> {
+
+        const channel = await this.mongoChannelService.findById(channelParams.id);
+
+        if(channel.creatorId !== user.id){
+            throw new ForbiddenException('You do not have such access rights')
+        }
+        //geting array of channel moderators id <string[]>
+        //and adding new moderatot to array
+        const moderators = channel.moderatorsId;
+        const newModerators = [...moderators, channelParams.moderatorId];
+
+        //updating channel moderator array
+        const channelData: UpdateChannelModeratorsDto = {id: channel.id, moderatorsId: newModerators}; 
+        const updatedChannel = await this.mongoChannelService.update(channelData)
+
+        //if some error handle it here
+        if(!updatedChannel){
+            throw new InternalServerErrorException("DB: Something went wrong when updating channel moderator list")
+        }
+
+        return channelData;
+    }
+
+    async removeModerator(channelParams: UpdateChannelModeratorDto, user: UserDto): Promise<UpdateChannelModeratorsDto> {
+
+        const channel = await this.mongoChannelService.findById(channelParams.id);
+
+        if(channel.creatorId !== user.id){
+            throw new ForbiddenException('You do not have such access rights')
+        }
+        //geting array of channel moderators id <string[]>
+        //remove moderator with remModeratorId from array 
+        const moderators = channel.moderatorsId;
+        const newModerators = moderators.filter((value) => value !== channelParams.moderatorId);
+
+        //updating channel moderator array
+        const channelData: UpdateChannelModeratorsDto = {id: channel.id, moderatorsId: newModerators}; 
+        const updatedChannel = await this.mongoChannelService.update(channelData)
+
+        //if some error handle it here
+        if(!updatedChannel){
+            throw new InternalServerErrorException("DB: Something went wrong when updating channel moderator list")
+        }
+
+        return channelData;
+    }
+
+    async updateLastMessage(channelParams: UpdateChannelLastMessageDto, user: UserDto): Promise<UpdateChannelLastMessageDto> {
+
+        const channel = await this.mongoChannelService.findById(channelParams.id);
+
+        if(channel.creatorId !== user.id){
+            throw new ForbiddenException('You do not have such access rights')
+        }
+
+        const updatedChannel = await this.mongoChannelService.update(channelParams)
+
+        if(!updatedChannel){
+            throw new InternalServerErrorException("DB: Something went wrong when updating channel last activity")
+        }
+
+        return channelParams;
     }
     
-    async findById(id: string): Promise<Channel>{
-        const channel = await this.channelModel.findById(id);
-
-        if(!channel){
-            throw new NotFoundException('there is no such channel');
-        }
-
-        return channel
-    }
-
-    async updateById(channelData: UpdateChannelDto, user: UserDto): Promise<Channel>{
-        const channel = await this.channelModel.findById(channelData.id)
-        if (!channel){
-            throw new NotFoundException('there is no such channel')
-        }
-
-        if (String(channel.creatorId) !== user.id){
-            throw new ForbiddenException('You do not have such access rights')
-        }
-
-        return await this.channelModel.findByIdAndUpdate(channelData.id, channelData, {
-            runValidators: true,
-            new: true,
-        });
-    }
-
-    async updatePhoto(imgUrl: string, user: UserDto, channelId: string): Promise<Channel>{
-        const channel = await this.channelModel.findById(channelId)
-        if (!channel){
-            throw new NotFoundException('there is no such channel')
-        }
+    async updatePhoto(channelParams: UpdataChannelImgDto, user: UserDto): Promise<UpdataChannelImgDto> {
         
-        if (String(channel.creatorId) !== user.id){
+        const channel = await this.mongoChannelService.findById(channelParams.id);
+
+        if(channel.creatorId !== user.id){
             throw new ForbiddenException('You do not have such access rights')
         }
 
-        channel.imgUrl = imgUrl;
-        return await this.channelModel.findByIdAndUpdate(channelId, channel, {
-            runValidators: true,
-            new: true,
-        });
-        // return await this.channelModel.findByIdAndUpdate()
-    }
+        const updatedChannel = await this.mongoChannelService.update(channelParams)
 
-    async create(channel: CreateChannelDto, user: User): Promise<Channel>{
-        const data = Object.assign(channel, {creatorId: user._id})
+        if(!updatedChannel){
+            throw new InternalServerErrorException("DB: Something went wrong when updating channel photo")
+        }
 
-        return await this.channelModel.create(data);
+        return channelParams;
     }
 
 }
