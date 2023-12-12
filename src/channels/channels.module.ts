@@ -16,8 +16,7 @@ import { MongoModule } from 'src/mongo/mongo.module';
     CloudinaryModule,
     CompressModule,
     TokenModule,
-    MongoModule,
-    MongooseModule.forFeature([{name: Channel.name, schema: ChannelSchema}])
+    MongoModule
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService, CloudinaryService]

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Put, Query, Req, UseGuards} from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 
@@ -8,7 +8,7 @@ import HandleMultipart from 'src/utils/fastify-multipart-toBuffer';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
 import { ChannelDto } from 'src/mongo/dto/channel.dto';
 import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
-import { IsNotEmpty } from 'class-validator';
+
 
 
 @UseGuards(CookieAccessGuard)

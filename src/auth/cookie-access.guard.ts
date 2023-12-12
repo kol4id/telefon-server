@@ -23,7 +23,7 @@ export class CookieAccessGuard implements CanActivate{
         } catch (error: unknown){
             throw new UnauthorizedException('AccessToken: accessToken cookie is not valid, try /refresh to refresh access token')
         }
-        
+
         const data = await this.tokenService.VerifyTokenAsync(unsignCookie.value, 'access');
         const user = await this.mongoUserService.findById(data.id);
 
