@@ -2,7 +2,7 @@ import { FastifyRequest } from "fastify";
 import { Multipart } from '@fastify/multipart';
 import { PayloadTooLargeException } from "@nestjs/common";
 
-const HandleMultipart = async(request: FastifyRequest): Promise<Buffer> =>{
+export const HandleMultipart = async(request: FastifyRequest): Promise<Buffer> =>{
     const multData: Multipart = await request.file();
     try {
         return await multData.toBuffer()
@@ -10,4 +10,20 @@ const HandleMultipart = async(request: FastifyRequest): Promise<Buffer> =>{
         throw new PayloadTooLargeException('image is too large')
     }
 }
-export default HandleMultipart;
+
+export const HandleMultipartArray = async(request: FastifyRequest): Promise<Buffer[]> =>{
+
+    const parts = request.files();
+    const fileArray: Buffer[] = [];
+    try {
+        for await (const part of parts){
+            const buffer = await part.toBuffer();
+            if (buffer.length){
+                fileArray.push(buffer)
+            }
+        }
+    } catch (error: unknown){
+        throw new PayloadTooLargeException(error)
+    }
+    return fileArray;
+}
