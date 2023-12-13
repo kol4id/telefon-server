@@ -4,7 +4,7 @@ import { CreateChannelDto } from './dto/create-channel.dto';
 
 import { FastifyRequest } from 'fastify';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
-import HandleMultipart from 'src/utils/fastify-multipart-toBuffer';
+import {HandleMultipart} from 'src/utils/fastify-multipart-toBuffer';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
 import { ChannelDto } from 'src/mongo/dto/channel.dto';
 import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';

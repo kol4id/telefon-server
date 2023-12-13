@@ -5,6 +5,7 @@ import { CompressModule } from 'src/compress/compress.module';
 
 @Module({
   imports: [CompressModule],
-  providers: [CloudinaryService, CloudinaryProvider]
+  providers: [CloudinaryService, CloudinaryProvider],
+  exports: [CloudinaryService]
 })
 export class CloudinaryModule {}

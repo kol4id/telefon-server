@@ -19,6 +19,6 @@ import { MongoModule } from 'src/mongo/mongo.module';
     MongoModule
   ],
   controllers: [ChannelsController],
-  providers: [ChannelsService, CloudinaryService]
+  providers: [ChannelsService]
 })
 export class ChannelsModule {}
