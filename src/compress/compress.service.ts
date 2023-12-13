@@ -4,7 +4,11 @@ import * as sharp from 'sharp'
 @Injectable()
 export class CompressService {
     async CompressImageFromBuffer(img: Buffer): Promise<Buffer>{
-        const compressedImage: Buffer = await sharp(img).resize(1280,720).webp({quality:70}).toBuffer()
+        const resizeRate = 1.618;
+        const metadata = await sharp(img).metadata()
+        metadata.height = Math.floor(metadata.height/resizeRate);
+        metadata.width = Math.floor(metadata.width/resizeRate);
+        const compressedImage: Buffer = await sharp(img).resize(metadata.width, metadata.height).webp({quality:70}).toBuffer()
         return compressedImage;
     }
 }

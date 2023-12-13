@@ -32,6 +32,16 @@ export class CloudinaryService {
         })
     }
 
+    async UploadMultiple(files: Buffer[]): Promise<string[]>{
+        const urlsArr: string[] = [];
+        await Promise.all(
+            files.map(async(file)=>{
+                const url = await this.UploadImageByFile(file);
+                urlsArr.push(url);
+        }));
+        return urlsArr
+    }
+
     async FindImageById (id: string): Promise<void>{
         console.log(await cloudinary.api.resources_by_asset_ids(id))
     }
