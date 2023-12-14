@@ -35,10 +35,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('message')
-  handleMessage(client: Socket, payload: any): void {
+  handleMessage(client: Socket, payload: { room: string, message: string }): void {
     console.log(`Recived message from ${client.id}: ${payload}`)
-    this.server.to(client.id).emit('personalMessage', 'Privet!')
-    console.log(client.rooms)
+    // this.server.to(client.id).emit('personalMessage', 'Privet!')
+    // console.log(client.rooms)
+    client.to(payload.room).emit('messageFromRoom', payload.message);
     //this.server.emit('personalMessage', payload)
   }
 
