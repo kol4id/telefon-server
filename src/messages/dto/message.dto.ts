@@ -18,13 +18,10 @@ export class MessageDto{
     readonly edited: boolean;
 
     @IsDate()
-    readonly date: Date;
+    readonly createdAt: Date;
 
     @IsBoolean()
     readonly hasMedia: boolean;
-
-    @IsOptional()
-    readonly mediaLenght: number;
 
     @IsOptional()
     readonly mediaUrls: string[];
