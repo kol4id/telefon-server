@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, InternalServerErrorException} from '@ne
 import { UserDto } from 'src/mongo/dto/user.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { MongoChannelService } from 'src/mongo/mongo-channel.service';
-import { ChannelDto } from 'src/mongo/dto/channel.dto';
+import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
 
 @Injectable()
