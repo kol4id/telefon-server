@@ -1,11 +1,12 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Message } from "./shemas/message.schema";
 import { Model } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
-import { ChannelDto } from "./dto/channel.dto";
+import { ChannelDto } from "../channels/dto/channel.dto";
 import { MessageDto } from "src/messages/dto/message.dto";
 import { MongoParser } from "src/mongo/mongoObjectParser";
 import { CreateMessageDto } from "src/messages/dto/create-message.dto";
+import { UpdateMediaDto, UpdateMessageContentDto } from "./dto/update-message.dto";
 
 
 @Injectable()
@@ -15,7 +16,17 @@ export class MongoMessageService{
         private mongoParser: MongoParser,
     ){}
 
-    async findMany(channelId: string, chunkNumber: number, limit: number):Promise<MessageDto[]>{
+    async findOne(messageId: string): Promise<MessageDto>{
+        const message = await this.messageModel.findById(messageId);
+
+        if(!message){
+            throw new BadRequestException('There is no such message')
+        }
+        const parsedMessages = await this.mongoParser.parse<MessageDto>(['updatedAt'], message);
+        return parsedMessages;
+    }
+
+    async findManyByChannel(channelId: string, chunkNumber: number, limit: number):Promise<MessageDto[]>{
 
         const skip = (chunkNumber - 1) * limit;
         const messages = await this.messageModel.find({channelId})
@@ -25,11 +36,6 @@ export class MongoMessageService{
             .exec()
 
         const parsedMessages = await this.mongoParser.parse<MessageDto[]>(['updatedAt'], messages);
-
-        // const resultMessages = messages.map((message)=>{
-        //     const parsedMessage =  this.mongoParser.parse<MessageDto>(['createdAt'], message);
-        //     return parsedMessage;
-        // })
 
         return parsedMessages;
     }
@@ -47,5 +53,14 @@ export class MongoMessageService{
 
         const parsedMessages = await this.mongoParser.parse<MessageDto>(['updatedAt'], created);
         return parsedMessages;
+    }
+
+    async update(messageData: UpdateMediaDto | UpdateMessageContentDto): Promise<MessageDto>{
+        const updatedChannel = await this.messageModel.findByIdAndUpdate(messageData.id, {...messageData}, {
+            runValidators: true,
+            new: true,
+        })
+        const updatedChannelData: MessageDto = await this.mongoParser.parse<MessageDto>(['updatedAt'], updatedChannel);
+        return updatedChannelData;
     }
 }

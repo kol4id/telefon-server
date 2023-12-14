@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, NotFoundException} from "@nes
 import { InjectModel } from "@nestjs/mongoose";
 import { Channel } from "./shemas/channel.schema";
 import { Model } from "mongoose";
-import { ChannelDto } from "./dto/channel.dto";
+import { ChannelDto } from "../channels/dto/channel.dto";
 import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
 
@@ -52,7 +52,6 @@ export class MongoChannelService {
 
     async update(channelData: UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdataChannelImgDto): Promise<ChannelDto>{
     
-        console.log(channelData)
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, {
             runValidators: true,
             new: true,
