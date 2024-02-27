@@ -6,7 +6,7 @@ import { SocketWithAuth } from './socket-io-adapter';
 import { ServiceUnavailableException } from '@nestjs/common';
 import { MongoUserService } from 'src/mongo/mongo-user.service';
 
-@WebSocketGateway()
+@WebSocketGateway({cors: true})
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit{
   constructor(private mongoUserService: MongoUserService){}
 
@@ -41,6 +41,16 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     // console.log(client.rooms)
     client.to(payload.room).emit('messageFromRoom', payload.message);
     //this.server.emit('personalMessage', payload)
+  }
+
+  // handleMessageUpdate(client: Socket, payload: { room: string, message: string }): void {
+  //   this.server.to(payload.room).emit('messageUpdate', payload.message);
+  //   client.to(payload.room).emit('messageFromRoom', payload.message);
+  //   //this.server.emit('personalMessage', payload)
+  // }
+
+  async sendToRoom(roomName: string, message: any){
+    this.server.in(roomName).emit('personalMessage', message);
   }
 
   async addUser(userId: string, socketId: string): Promise<boolean>{

@@ -11,7 +11,8 @@ import { MongoModule } from 'src/mongo/mongo.module';
     TokenModule,
     MongoModule
   ],
-  providers: [RealtimeGateway]
+  providers: [RealtimeGateway],
+  exports: [RealtimeGateway],
 
 })
 export class RealtimeModule {}
