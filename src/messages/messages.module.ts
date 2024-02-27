@@ -5,13 +5,15 @@ import { MongoModule } from 'src/mongo/mongo.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { TokenModule } from 'src/token/token.module';
 import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
+import { RealtimeModule } from 'src/realtime/realtime.module';
 
 @Module({
   imports: [
     MongoModule,
     AuthModule,
     TokenModule,
-    CloudinaryModule
+    CloudinaryModule,
+    RealtimeModule
   ],
   providers: [MessagesService],
   controllers: [MessagesController]

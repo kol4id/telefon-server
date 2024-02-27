@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { MessageDto } from './dto/message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { MessagesService } from './messages.service';
@@ -8,6 +8,7 @@ import { FastifyRequest } from 'fastify';
 import {HandleMultipartArray} from 'src/utils/fastify-multipart-toBuffer';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
+import { DeleteMessagesDto } from './dto/delete-message.dto';
 
 @UseGuards(CookieAccessGuard)
 @Controller('messages')
@@ -17,7 +18,7 @@ export class MessagesController {
         private cloudinaryService: CloudinaryService
     ){}
 
-    @Get()
+    @Get() 
     async GetMessagesForChannel(
         @Query() request: GetMessagesDto,
     ):Promise<MessageDto[]>{
@@ -31,12 +32,14 @@ export class MessagesController {
     //When transmitting a message with a media, it is mandatory to set the hasMedia = true flag
     //passing such a message, we get the messageId in the response, which we pass to @Put('create')
     //and attaching all the files that came with the message
-    @Post('create')
+    @Post('create') 
     async CreateMessage(
         @Body() message: CreateMessageDto,
         @Req() req
     ): Promise<MessageDto | string>{
-        
+
+        console.log(message)
+        console.log('messages/create')
         return await this.messageService.create(message, req.user);
     }
 
@@ -62,6 +65,18 @@ export class MessagesController {
     ): Promise<UpdateMediaDto>{
 
         return await this.messageService.update(message, req.user)
+    }
+
+    @Delete('delete')
+    async DeleteMessage(
+        @Query('messageId') messageId: string,
+        @Query('channelId') channelId: string,
+        @Req() req
+    ): Promise<void>{
+
+        const messageData = {messageId, channelId};
+        console.log(messageData)
+        await this.messageService.delete(messageData, req.user);
     }
 
 }

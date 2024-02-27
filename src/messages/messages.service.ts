@@ -5,16 +5,23 @@ import { MongoMessageService } from 'src/mongo/mongo-message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UserDto } from 'src/mongo/dto/user.dto';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
+import { RealtimeGateway } from 'src/realtime/realtime.gateway';
+import { DeleteMessagesDto } from './dto/delete-message.dto';
 
 @Injectable()
 export class MessagesService {
-    constructor(private mongoMessageService: MongoMessageService){}
+    constructor(
+        private mongoMessageService: MongoMessageService,
+        private realtimeService: RealtimeGateway
+    ){}
 
     async getMessages(params: GetMessagesDto): Promise<MessageDto[]>{
-        const limit: number = 25;
+        const limit: number = 50;
         const messages = await this.mongoMessageService.findManyByChannel(params.channelId, 
                                                                 parseInt(params.chunkNumber), 
-                                                                limit);
+                                                                limit,
+                                                                'desc');
+
         return messages
     }
     
@@ -25,6 +32,7 @@ export class MessagesService {
             return newMessage.id;
         }
 
+        this.realtimeService.sendToRoom(newMessage.channelId, {eventType: 'onMessageCreate', data: newMessage});
         return newMessage
     }
 
@@ -59,5 +67,13 @@ export class MessagesService {
 
         const updatedMessage = await this.mongoMessageService.update(updateData);
         return updatedMessage;
+    }
+
+    async delete(messageData: DeleteMessagesDto, user: UserDto): Promise<void>{
+        if (!user.subscriptions.find((sub) => sub === messageData.channelId)){
+            throw new BadRequestException("You don't have such access rights")
+        }
+
+        return await this.mongoMessageService.delete(messageData.messageId);
     }
 }
