@@ -3,11 +3,17 @@ import { UserDto } from 'src/mongo/dto/user.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { MongoChannelService } from 'src/mongo/mongo-channel.service';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
-import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
+import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
+import { MongoUserService } from 'src/mongo/mongo-user.service';
+import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 
 @Injectable()
 export class ChannelsService {
-    constructor(private mongoChannelService: MongoChannelService) {}
+    constructor(
+        private mongoChannelService: MongoChannelService,
+        private mongoUserService: MongoUserService,
+        private cloudinaryService: CloudinaryService
+    ){}
     // @InjectModel(Channel.name) private channelModel: Model<Channel>
     // async findAll(query: Query): Promise<Channel[]> {
 
@@ -105,21 +111,31 @@ export class ChannelsService {
         return channelParams;
     }
     
-    async updatePhoto(channelParams: UpdataChannelImgDto, user: UserDto): Promise<UpdataChannelImgDto> {
+    async updatePhoto(channelId: string, user: UserDto, fileData: Buffer): Promise<UpdateChannelImgDto> {
         
-        const channel = await this.mongoChannelService.findById(channelParams.id);
+        const channel = await this.mongoChannelService.findById(channelId);
 
         if(channel.creatorId !== user.id){
             throw new ForbiddenException('You do not have such access rights')
         }
-
-        const updatedChannel = await this.mongoChannelService.update(channelParams)
+        
+        const url = await this.cloudinaryService.UploadImageByFile(fileData);        
+        const dataToUpdate: UpdateChannelImgDto = {id: channelId, imgUrl: url}
+        const updatedChannel = await this.mongoChannelService.update(dataToUpdate)
 
         if(!updatedChannel){
             throw new InternalServerErrorException("DB: Something went wrong when updating channel photo")
         }
 
-        return channelParams;
+        return dataToUpdate;
     }
 
+    async subscribe(channelId: string, user: UserDto): Promise<void>{
+        const result = await this.mongoUserService.addSubscription(user.id, channelId);
+
+        if(result){
+            const channel = await this.mongoChannelService.subscribe(channelId);
+            console.log(channel);
+        }
+    }
 }

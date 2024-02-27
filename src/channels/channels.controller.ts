@@ -7,8 +7,7 @@ import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import {HandleMultipart} from 'src/utils/fastify-multipart-toBuffer';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
-import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
-
+import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
 
 
 @UseGuards(CookieAccessGuard)
@@ -22,7 +21,8 @@ export class ChannelsController {
     @Get('all')
     async GetAllChannelsForUser(@Req() req): Promise<ChannelDto[]>{
 
-        return await this.channelsService.findAllForUser(req.user);
+        const channels = await this.channelsService.findAllForUser(req.user);
+        return channels
     }
 
     @Post()
@@ -67,14 +67,24 @@ export class ChannelsController {
         @Query('channelId') channelId: string,
         @Req() request: FastifyRequest,
         @Req() req
-    ): Promise<UpdataChannelImgDto>{
+    ): Promise<UpdateChannelImgDto>{
 
         if (!channelId) {
             throw new BadRequestException('channelId should not be empty');
         }
         const fileData: Buffer = await HandleMultipart(request);
-        const url = await this.cloudinaryService.UploadImageByFile(fileData);        
-        const dataToUpdate: UpdataChannelImgDto = {id: channelId, imgUrl: url}
-        return await this.channelsService.updatePhoto(dataToUpdate , req.user)      
+        return await this.channelsService.updatePhoto(channelId , req.user, fileData)      
+    }
+
+    @Put('subscribe')
+    async Subscribe(
+        @Query('channelId') channelId: string,
+        @Req() req
+    ){
+        if (!channelId) {
+            throw new BadRequestException('channelId should not be empty');
+        }
+
+        await this.channelsService.subscribe(channelId, req.user);
     }
 }
