@@ -31,15 +31,21 @@ export class AuthService {
         const tokens = await this.tokenService.GetTokensAsync(String(user.id))
 
         response.setCookie('accessToken', tokens.access, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 1)
         })
 
         response.setCookie('refreshToken', tokens.refresh, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
     }
 
@@ -56,15 +62,21 @@ export class AuthService {
 
         const tokens = await this.tokenService.GetTokensAsync(String(user.id))
         response.setCookie('accessToken', tokens.access, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 1)
         })
 
         response.setCookie('refreshToken', tokens.refresh, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
     }
 
@@ -73,15 +85,21 @@ export class AuthService {
         const tokens = await this.tokenService.GetTokensAsync(userData.id)
         
         response.setCookie('accessToken', tokens.access, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 1)
         })
 
         response.setCookie('refreshToken', tokens.refresh, {
+            sameSite: 'none',
             httpOnly: true,
             path: '/',
             signed: true,
+            secure: true,
+            expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
     }
 
