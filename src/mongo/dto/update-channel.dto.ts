@@ -22,7 +22,7 @@ export class UpdateChannelDto {
     readonly creatorId: User;
 }
 
-export class UpdataChannelImgDto {
+export class UpdateChannelImgDto {
     @ApiProperty({type: 'string', example: '6577417dd6769aad5c4ba04e'})
     @IsNotEmpty({message: 'channel ID requred to update'})
     readonly id: string;
