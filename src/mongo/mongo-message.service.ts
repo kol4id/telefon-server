@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Message } from "./shemas/message.schema";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
 import { MessageDto } from "src/messages/dto/message.dto";
@@ -17,7 +17,8 @@ export class MongoMessageService{
     ){}
 
     async findOne(messageId: string): Promise<MessageDto>{
-        const message = await this.messageModel.findById(messageId);
+
+        const message = await this.messageModel.findById(messageId).exec();
 
         if(!message){
             throw new BadRequestException('There is no such message')
@@ -26,17 +27,16 @@ export class MongoMessageService{
         return parsedMessages;
     }
 
-    async findManyByChannel(channelId: string, chunkNumber: number, limit: number):Promise<MessageDto[]>{
+    async findManyByChannel(channelId: string, chunkNumber: number, limit: number, sort: 'asc' | 'desc'):Promise<MessageDto[]>{
 
         const skip = (chunkNumber - 1) * limit;
         const messages = await this.messageModel.find({channelId})
-            .sort({createdAt: 'desc'})
+            .sort({createdAt: sort})
             .skip(skip)
             .limit(limit)
             .exec()
 
-        const parsedMessages = await this.mongoParser.parse<MessageDto[]>(['updatedAt'], messages);
-
+        const parsedMessages = await this.mongoParser.parseArray<MessageDto>(['updatedAt', '__v'], messages);
         return parsedMessages;
     }
 
@@ -62,5 +62,11 @@ export class MongoMessageService{
         })
         const updatedChannelData: MessageDto = await this.mongoParser.parse<MessageDto>(['updatedAt'], updatedChannel);
         return updatedChannelData;
+    }
+    
+    async delete(messageId: string): Promise<any>{
+        // console.log(await this.findOne(messageId))
+        const deleted = await this.messageModel.findByIdAndDelete(messageId);
+        return deleted
     }
 }

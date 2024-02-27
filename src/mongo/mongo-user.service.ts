@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { User } from "./shemas/user.schema";
 import { Model } from "mongoose";
@@ -103,4 +103,23 @@ export class MongoUserService {
         if(!userData){ return false }
         return true;
     }
+
+    async addSubscription(userId: string, channelId: string): Promise<boolean>{
+        const user = await this.userModel.findById(userId);
+
+        if (user.subscriptions.includes(channelId)){
+            throw new BadRequestException("already subscribed");           
+        }
+
+        const userData = await this.userModel.findByIdAndUpdate(userId, {$push:{subscriptions: channelId}}, {
+            runValidators: true,
+        })       
+
+        if(userData){
+            return true
+        }
+        return false
+    }
+
+
 }

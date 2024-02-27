@@ -3,7 +3,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Channel } from "./shemas/channel.schema";
 import { Model } from "mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
-import { UpdataChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
+import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
 
 
@@ -50,7 +50,7 @@ export class MongoChannelService {
         }
     }
 
-    async update(channelData: UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdataChannelImgDto): Promise<ChannelDto>{
+    async update(channelData: UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdateChannelImgDto): Promise<ChannelDto>{
     
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, {
             runValidators: true,
@@ -60,5 +60,17 @@ export class MongoChannelService {
         const updatedChannelData: ChannelDto = {id: _id, ...channelObj}
 
         return updatedChannelData;
+    }
+
+    async subscribe(channelId: string): Promise<ChannelDto>{
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: 1}}, {
+            runValidators: true,
+            new: true,
+        })
+
+        const {createdAt, _id, ...channelObj} =  JSON.parse(JSON.stringify(updatedChannel));
+        const updatedChannelData: ChannelDto = {id: _id, ...channelObj}
+
+        return updatedChannelData
     }
 }
