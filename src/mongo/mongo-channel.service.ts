@@ -5,11 +5,14 @@ import { Model } from "mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
+import { MongoParser } from "./mongoObjectParser";
 
 
 @Injectable()
 export class MongoChannelService {
-    constructor(@InjectModel(Channel.name) private channelModel: Model<Channel>){}
+    constructor(
+        @InjectModel(Channel.name) private channelModel: Model<Channel>,
+        private mongoParser: MongoParser){}
 
 
     async findById(id: string): Promise<ChannelDto>{
@@ -18,23 +21,16 @@ export class MongoChannelService {
             throw new NotFoundException('there is no such channel')
         }
 
-        const {createdAt, _id, ...channelObj} =  JSON.parse(JSON.stringify(channel));
-
-        const channelData: ChannelDto = {id: _id, ...channelObj}
-        return channelData;
+        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], channel);
+        return parsedChannels;
     }
 
     async findMultipleChannelsById(channelsList: string[]): Promise<ChannelDto[]>{
 
         const channels = await this.channelModel.find({_id: {$in: channelsList}})
 
-        const resultChannels = channels.map((channel)=>{
-            const {createdAt, _id, ...channelObj} =  JSON.parse(JSON.stringify(channel));
-            const newChannel: ChannelDto = {id: _id, ...channelObj}
-            return newChannel;
-        })
-        
-        return resultChannels;
+        const parsedChannels = await this.mongoParser.parseArray<ChannelDto>(['createdAt', '__v'], channels);
+        return parsedChannels;
     }
 
     async create(channelData: CreateChannelDto, userId: string): Promise<boolean>{
@@ -56,10 +52,8 @@ export class MongoChannelService {
             runValidators: true,
             new: true,
         })
-        const {createdAt, _id, ...channelObj} =  JSON.parse(JSON.stringify(updatedChannel));
-        const updatedChannelData: ChannelDto = {id: _id, ...channelObj}
-
-        return updatedChannelData;
+        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], updatedChannel);
+        return parsedChannels;
     }
 
     async subscribe(channelId: string): Promise<ChannelDto>{
@@ -68,9 +62,7 @@ export class MongoChannelService {
             new: true,
         })
 
-        const {createdAt, _id, ...channelObj} =  JSON.parse(JSON.stringify(updatedChannel));
-        const updatedChannelData: ChannelDto = {id: _id, ...channelObj}
-
-        return updatedChannelData
+        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], updatedChannel);
+        return parsedChannels;
     }
 }
