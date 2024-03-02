@@ -30,7 +30,8 @@ export class MongoMessageService{
     async findManyByChannel(channelId: string, chunkNumber: number, limit: number, sort: 'asc' | 'desc'):Promise<MessageDto[]>{
 
         const skip = (chunkNumber - 1) * limit;
-        const messages = await this.messageModel.find({channelId})
+        const messages = await this.messageModel
+            .find({channelId})
             .sort({createdAt: sort})
             .skip(skip)
             .limit(limit)

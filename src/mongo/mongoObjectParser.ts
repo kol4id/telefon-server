@@ -18,7 +18,6 @@ export class MongoParser{
      * @param object object to exclude from
      */
     async parse<T>(excludeFields: string[], object: any): Promise<T>{
-
         const {_id, ...Obj} = JSON.parse(JSON.stringify(object));
         excludeFields.forEach((field) => {
             delete Obj[field];
