@@ -24,6 +24,23 @@ export class MessagesService {
 
         return messages
     }
+
+    async getLastMessages(user: UserDto): Promise<MessageDto[][]>{
+        const CHUNK = 1;
+        const LIMIT = 50;
+        const messages = await Promise.all(
+            user.subscriptions.map(async(subscription) => {
+                return await this.mongoMessageService
+                                                .findManyByChannel( subscription, 
+                                                                    CHUNK, 
+                                                                    LIMIT,
+                                                                    'desc')
+            })
+        )
+
+        // console.log(messages);
+        return messages;
+    }
     
     async create(message: CreateMessageDto, user: UserDto): Promise<MessageDto | string>{
 

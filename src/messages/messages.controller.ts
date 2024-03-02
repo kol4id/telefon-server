@@ -22,8 +22,17 @@ export class MessagesController {
     async GetMessagesForChannel(
         @Query() request: GetMessagesDto,
     ):Promise<MessageDto[]>{
-
+        console.log('messages/get')
+        console.log(request)
         return await this.messageService.getMessages(request);
+    }
+
+    @Get('last') 
+    async GetLastMessagesForUser(
+        @Req() req
+    ):Promise<MessageDto[][]>{
+        console.log('messages/all')
+        return await this.messageService.getLastMessages(req.user);
     }
 
     //A router with a specific, we accept part of the message without media
