@@ -1,54 +1,25 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+type token = {
+    secret: string,
+    expiresIn: string,
+}
+
 @Injectable()
 export class TokenService {
     constructor(private jwtService: JwtService){}
 
     async GetTokenAsync(id: string, tokenType: string): Promise<string>{
-        let tokenString: string;
-        let expiresIn: string;
-        switch (tokenType) {
-            case 'access':
-                tokenString = process.env.JWT_SECRET;
-                expiresIn = process.env.JWT_EXPIRED;
-                break;
-            
-            case 'refresh':
-                tokenString = process.env.JWT_REFRESH_SECRET
-                expiresIn = process.env.JWT_REFRESH_EXPIRED;
-                break;
-        }
-
-        return await this.jwtService.signAsync(
-            {id},
-            {
-                secret: tokenString,
-                expiresIn: expiresIn,
-            }
-        )
+        const config = this.GetTokenConfig(tokenType);
+        return await this.jwtService.signAsync({id}, config);
     }
 
     async VerifyTokenAsync(token: string, tokenType: string): Promise<any>{
-
-        let tokenString: string;
-        switch (tokenType) {
-            case 'access':
-                tokenString = process.env.JWT_SECRET;
-                break;
-            
-            case 'refresh':
-                tokenString = process.env.JWT_REFRESH_SECRET
-                break;
-        }
+        const config = this.GetTokenConfig(tokenType);
         let data: any;
         try {
-            data = await this.jwtService.verifyAsync(
-                token,
-                {
-                    secret: tokenString,
-                }
-            )
+            data = await this.jwtService.verifyAsync(token, config)
         } catch (error: unknown) {
             throw new UnauthorizedException(`Your ${tokenType} token is not valid`);
         }
@@ -60,4 +31,24 @@ export class TokenService {
         const refresh = await this.GetTokenAsync(id, 'refresh')
         return {access, refresh}
     }
+
+    private GetTokenConfig(tokenType: string): token{
+        const config: token = this.tokenConfigs[tokenType];
+        if(!config){
+            throw new Error(`Invalid token type: ${tokenType}`);
+        }
+        return config;
+    }
+
+    private tokenConfigs = {
+        access: {
+            secret: process.env.JWT_SECRET,
+            expiresIn: process.env.JWT_EXPIRED,
+        },
+        refresh: {
+            secret: process.env.JWT_REFRESH_SECRET,
+            expiresIn: process.env.JWT_REFRESH_EXPIRED,
+        }
+    };
+
 }
