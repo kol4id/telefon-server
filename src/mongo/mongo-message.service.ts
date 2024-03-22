@@ -1,44 +1,56 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Message } from "./shemas/message.schema";
-import { Model, Types } from "mongoose";
+import { Model} from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
-import { ChannelDto } from "../channels/dto/channel.dto";
 import { MessageDto } from "src/messages/dto/message.dto";
 import { MongoParser } from "src/mongo/mongoObjectParser";
 import { CreateMessageDto } from "src/messages/dto/create-message.dto";
 import { UpdateMediaDto, UpdateMessageContentDto } from "./dto/update-message.dto";
 
 
+const messageProjection = {
+    id: 1,
+    channelId: 1,
+    creatorId: 1,
+    content: 1,
+    edited: 1,
+    hasMedia: 1,
+    mediaUrls: 1,
+    createdAt: 1,
+}
+
 @Injectable()
 export class MongoMessageService{
     constructor(
         @InjectModel(Message.name) private messageModel: Model<Message>,
-        private mongoParser: MongoParser,
     ){}
 
     async findOne(messageId: string): Promise<MessageDto>{
 
-        const message = await this.messageModel.findById(messageId).exec();
+        const message = await this.messageModel.findById(messageId, messageProjection).exec();
+        this.StringifyId(message);
 
         if(!message){
             throw new BadRequestException('There is no such message')
         }
-        const parsedMessages = await this.mongoParser.parse<MessageDto>(['updatedAt'], message);
-        return parsedMessages;
+        
+        return message as any as MessageDto;
     }
 
     async findManyByChannel(channelId: string, chunkNumber: number, limit: number, sort: 'asc' | 'desc'):Promise<MessageDto[]>{
 
         const skip = (chunkNumber - 1) * limit;
         const messages = await this.messageModel
-            .find({channelId})
+            .find({channelId}, messageProjection)
             .sort({createdAt: sort})
             .skip(skip)
             .limit(limit)
+            .lean()
             .exec()
 
-        const parsedMessages = await this.mongoParser.parseArray<MessageDto>(['updatedAt', '__v'], messages);
-        return parsedMessages;
+        this.StringifyId(messages);
+        
+        return messages as any as MessageDto[];
     }
 
     async create(message: CreateMessageDto, userId: string): Promise<MessageDto>{
@@ -51,9 +63,9 @@ export class MongoMessageService{
         }
 
         const created = await this.messageModel.create(newMessage)
-
-        const parsedMessages = await this.mongoParser.parse<MessageDto>(['updatedAt'], created);
-        return parsedMessages;
+        this.StringifyId(created);
+    
+        return created as any as MessageDto;
     }
 
     async update(messageData: UpdateMediaDto | UpdateMessageContentDto): Promise<MessageDto>{
@@ -61,13 +73,20 @@ export class MongoMessageService{
             runValidators: true,
             new: true,
         })
-        const updatedChannelData: MessageDto = await this.mongoParser.parse<MessageDto>(['updatedAt'], updatedChannel);
-        return updatedChannelData;
+
+        this.StringifyId(updatedChannel);
+        return updatedChannel as any as MessageDto;
     }
     
     async delete(messageId: string): Promise<any>{
-        // console.log(await this.findOne(messageId))
         const deleted = await this.messageModel.findByIdAndDelete(messageId);
         return deleted
     }
+
+    private StringifyId(messages: any){
+        messages.forEach((message)=>{
+            message.id = message._id.toString()
+            delete message._id;
+        })
+    } 
 }
