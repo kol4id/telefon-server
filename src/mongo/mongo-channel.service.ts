@@ -7,6 +7,15 @@ import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, Upd
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
 import { MongoParser } from "./mongoObjectParser";
 
+const channelProjection = {
+    id: 1,
+    title: 1,
+    imgUrl: 1,
+    subscribers: 1,
+    moderatorsId: 1,
+    lastMessageId: 1,
+    updatedAt: 1,
+}
 
 @Injectable()
 export class MongoChannelService {
@@ -16,21 +25,21 @@ export class MongoChannelService {
 
 
     async findById(id: string): Promise<ChannelDto>{
-        const channel = await this.channelModel.findById(id);  
+        const channel = await this.channelModel.findById(id, channelProjection);  
         if (!channel){
             throw new NotFoundException('there is no such channel')
         }
+        this.StringifyId(channel);
 
-        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], channel);
-        return parsedChannels;
+        return channel as any as ChannelDto;
     }
 
     async findMultipleChannelsById(channelsList: string[]): Promise<ChannelDto[]>{
 
-        const channels = await this.channelModel.find({_id: {$in: channelsList}})
-
-        const parsedChannels = await this.mongoParser.parseArray<ChannelDto>(['createdAt', '__v'], channels);
-        return parsedChannels;
+        const channels = await this.channelModel.find({_id: {$in: channelsList}}, channelProjection);
+        this.StringifyId(channels);
+        
+        return channels as any as ChannelDto[];
     }
 
     async create(channelData: CreateChannelDto, userId: string): Promise<boolean>{
@@ -56,6 +65,11 @@ export class MongoChannelService {
         return parsedChannels;
     }
 
+    async messageCount(channelId: string){
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {totalMessages: 1}})
+        return updatedChannel;
+    }
+
     async subscribe(channelId: string): Promise<ChannelDto>{
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: 1}}, {
             runValidators: true,
@@ -65,4 +79,11 @@ export class MongoChannelService {
         const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], updatedChannel);
         return parsedChannels;
     }
+
+    private StringifyId(channels: any){
+        channels.forEach((channel)=>{
+            channel.id = channel._id.toString()
+            delete channel._id;
+        })
+    } 
 }
