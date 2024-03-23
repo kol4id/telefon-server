@@ -1,17 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageDto } from './dto/message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
-import { MongoMessageService } from 'src/mongo/mongo-message.service';
+import { MessageRepository } from 'src/mongo/mongo-message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UserDto } from 'src/mongo/dto/user.dto';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { DeleteMessagesDto } from './dto/delete-message.dto';
+import { ChannelsService } from 'src/channels/channels.service';
 
 @Injectable()
 export class MessagesService {
     constructor(
-        private mongoMessageService: MongoMessageService,
+        private channelsService: ChannelsService,
+        private mongoMessageService: MessageRepository,
         private realtimeService: RealtimeGateway
     ){}
 
@@ -25,15 +27,15 @@ export class MessagesService {
         return messages
     }
 
-    async getLastMessages(user: UserDto): Promise<MessageDto[][]>{
-        const CHUNK = 1;
-        const LIMIT = 50;
+    async getLastMessages(user: UserDto, chunk: number, limit: number): Promise<MessageDto[][]>{
+        // const CHUNK = 1;
+        // const LIMIT = 50;
         const messages = await Promise.all(
             user.subscriptions.map(async(subscription) => {
                 return await this.mongoMessageService
                                                 .findManyByChannel( subscription, 
-                                                                    CHUNK, 
-                                                                    LIMIT,
+                                                                    chunk, 
+                                                                    limit,
                                                                     'desc')
             })
         )
@@ -50,6 +52,8 @@ export class MessagesService {
         }
 
         this.realtimeService.sendToRoom(newMessage.channelId, {eventType: 'onMessageCreate', data: newMessage});
+        this.channelsService.updateLastMessage({id: message.channelId, lastMessageId: newMessage.id}, user)
+        await this.channelsService.UpdateTotalMessages(message.channelId);        
         return newMessage
     }
 

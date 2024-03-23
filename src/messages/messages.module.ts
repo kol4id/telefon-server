@@ -6,6 +6,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { TokenModule } from 'src/token/token.module';
 import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
 import { RealtimeModule } from 'src/realtime/realtime.module';
+import { ChannelsModule } from 'src/channels/channels.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { RealtimeModule } from 'src/realtime/realtime.module';
     AuthModule,
     TokenModule,
     CloudinaryModule,
-    RealtimeModule
+    RealtimeModule,
+    ChannelsModule
   ],
   providers: [MessagesService],
   controllers: [MessagesController]

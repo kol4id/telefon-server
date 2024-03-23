@@ -8,7 +8,7 @@ import { FastifyRequest } from 'fastify';
 import {HandleMultipartArray} from 'src/utils/fastify-multipart-toBuffer';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
-import { DeleteMessagesDto } from './dto/delete-message.dto';
+// import { DeleteMessagesDto } from './dto/delete-message.dto';
 
 @UseGuards(CookieAccessGuard)
 @Controller('messages')
@@ -32,9 +32,16 @@ export class MessagesController {
         @Req() req
     ):Promise<MessageDto[][]>{
         console.log('messages/all')
-        return await this.messageService.getLastMessages(req.user);
+        return await this.messageService.getLastMessages(req.user, 1, 50);
     }
 
+    @Get('last/one') 
+    async GetOneLastMessagesForUser(
+        @Req() req
+    ):Promise<MessageDto[][]>{
+        console.log('messages/all')
+        return await this.messageService.getLastMessages(req.user, 1, 1);
+    }
     //A router with a specific, we accept part of the message without media
     //if there is no media in the message initially, use only this router
     //in another case, additionally use @Put('create').
