@@ -14,7 +14,7 @@ export class AuthController {
     async signupUser(
         @Body() signupData: SignupUserDto,
         @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<void>{
+    ): Promise<any>{
     
         return this.authService.signupUser(signupData, response);
     }
@@ -23,7 +23,7 @@ export class AuthController {
     async loginUsers(
         @Query() loginData: LoginUserDto,
         @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<void>{
+    ): Promise<any>{
     
         return await this.authService.loginUser(loginData, response);
     }
@@ -33,7 +33,7 @@ export class AuthController {
     async refreshUsers(
         @Req() res,
         @Res({ passthrough: true }) response: FastifyReply,
-    ): Promise<void>{
+    ): Promise<any>{
  
         return await this.authService.refreshUser(res.user, response);
     }

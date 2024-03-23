@@ -4,17 +4,17 @@ import { SignupUserDto } from './dto/signup.dto';
 import { LoginUserDto } from './dto/login.dto';
 import { FastifyReply } from 'fastify';
 import { UserDto } from 'src/mongo/dto/user.dto';
-import { MongoUserService } from 'src/mongo/mongo-user.service';
+import { UserRepository } from 'src/mongo/mongo-user.service';
 import { TokenService } from 'src/token/token.service';
 
 @Injectable()
 export class AuthService {
     constructor(
-        private mongoUserService: MongoUserService,
+        private mongoUserService: UserRepository,
         private tokenService: TokenService,
     ){}
 
-    async signupUser(signupData: SignupUserDto, response: FastifyReply): Promise<void>{
+    async signupUser(signupData: SignupUserDto, response: FastifyReply): Promise<any>{
         console.log(signupData)
         const {email, password} = signupData;
 
@@ -47,9 +47,11 @@ export class AuthService {
             secure: true,
             expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
+
+        return user.id;
     }
 
-    async loginUser(loginData: LoginUserDto, response: FastifyReply): Promise<void>{
+    async loginUser(loginData: LoginUserDto, response: FastifyReply): Promise<any>{
         console.log(loginData)
         const {email, password} = loginData;
         
@@ -78,9 +80,11 @@ export class AuthService {
             secure: true,
             expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
+
+        return user.id;
     }
 
-    async refreshUser(userData: UserDto, response: FastifyReply): Promise<void>{        
+    async refreshUser(userData: UserDto, response: FastifyReply): Promise<any>{        
         console.log(userData)
         const tokens = await this.tokenService.GetTokensAsync(userData.id)
         
@@ -101,6 +105,8 @@ export class AuthService {
             secure: true,
             expires: new Date(Date.now() + 3600000 * 24 * 14)
         })
+        
+        return userData.id;
     }
 
 }

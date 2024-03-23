@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { MongoUserService } from "src/mongo/mongo-user.service";
+import { UserRepository } from "src/mongo/mongo-user.service";
 import { TokenService } from "src/token/token.service";
 
 
@@ -7,7 +7,7 @@ import { TokenService } from "src/token/token.service";
 export class CookieRefreshGuard implements CanActivate{
     constructor(
         private tokenService: TokenService,
-        private mongoUserService: MongoUserService,
+        private mongoUserService: UserRepository,
     ){}
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
