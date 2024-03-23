@@ -29,7 +29,7 @@ export class ChannelsController {
     async CreateChannel(
         @Body() channel: CreateChannelDto,
         @Req() req,
-    ): Promise<boolean>{
+    ): Promise<ChannelDto>{
 
         return await this.channelsService.create(channel, req.user);
     }

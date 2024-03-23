@@ -1,17 +1,17 @@
 import { ForbiddenException, Injectable, InternalServerErrorException} from '@nestjs/common';
 import { UserDto } from 'src/mongo/dto/user.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
-import { MongoChannelService } from 'src/mongo/mongo-channel.service';
+import { ChannelRepository } from 'src/mongo/mongo-channel.service';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
-import { MongoUserService } from 'src/mongo/mongo-user.service';
+import { UserRepository } from 'src/mongo/mongo-user.service';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 
 @Injectable()
 export class ChannelsService {
     constructor(
-        private mongoChannelService: MongoChannelService,
-        private mongoUserService: MongoUserService,
+        private mongoChannelService: ChannelRepository,
+        private mongoUserService: UserRepository,
         private cloudinaryService: CloudinaryService
     ){}
     // @InjectModel(Channel.name) private channelModel: Model<Channel>
@@ -25,7 +25,7 @@ export class ChannelsService {
         return await this.mongoChannelService.findMultipleChannelsById(user.subscriptions);
     }
 
-    async create(channelData: CreateChannelDto, user: UserDto): Promise<boolean>{
+    async create(channelData: CreateChannelDto, user: UserDto): Promise<ChannelDto>{
 
         return this.mongoChannelService.create(channelData, user.id)
     }
@@ -98,10 +98,9 @@ export class ChannelsService {
 
         const channel = await this.mongoChannelService.findById(channelParams.id);
 
-        if(channel.creatorId !== user.id){
+        if(!user.subscriptions.includes(channel.id)){
             throw new ForbiddenException('You do not have such access rights')
         }
-
         const updatedChannel = await this.mongoChannelService.update(channelParams)
 
         if(!updatedChannel){
@@ -128,6 +127,10 @@ export class ChannelsService {
         }
 
         return dataToUpdate;
+    }
+
+    async UpdateTotalMessages(channelId: string){
+        await this.mongoChannelService.messageCount(channelId);
     }
 
     async subscribe(channelId: string, user: UserDto): Promise<void>{
