@@ -5,10 +5,10 @@ import { Model } from "mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
-import { MongoParser } from "./mongoObjectParser";
 
 const channelProjection = {
-    id: 1,
+    _id: 0,
+    id: '$_id',
     title: 1,
     imgUrl: 1,
     subscribers: 1,
@@ -17,67 +17,61 @@ const channelProjection = {
     updatedAt: 1,
 }
 
+const defaultOptions = {
+    runValidators: true,
+    new: true,
+    lean: true,
+    projection: channelProjection,
+}
+
 @Injectable()
-export class MongoChannelService {
+export class ChannelRepository {
     constructor(
         @InjectModel(Channel.name) private channelModel: Model<Channel>,
-        private mongoParser: MongoParser){}
-
+    ){}
 
     async findById(id: string): Promise<ChannelDto>{
-        const channel = await this.channelModel.findById(id, channelProjection);  
+        const channel = await this.channelModel.findById(id, channelProjection).lean();  
         if (!channel){
-            throw new NotFoundException('there is no such channel')
+            throw new NotFoundException(`there is no such channel ${id}`)
         }
-        this.StringifyId(channel);
 
         return channel as any as ChannelDto;
     }
 
     async findMultipleChannelsById(channelsList: string[]): Promise<ChannelDto[]>{
-
-        const channels = await this.channelModel.find({_id: {$in: channelsList}}, channelProjection);
-        this.StringifyId(channels);
+        const channels = await this.channelModel.find({_id: {$in: channelsList}}, channelProjection).lean();
         
         return channels as any as ChannelDto[];
     }
 
-    async create(channelData: CreateChannelDto, userId: string): Promise<boolean>{
-
+    async create(channelData: CreateChannelDto, userId: string): Promise<ChannelDto>{
         const newChannel = {...channelData, subscribers: 1}
         const data = Object.assign(newChannel, {creatorId: userId})
+        const channel = await this.channelModel.create(data);
 
-        try{
-            await this.channelModel.create(data);
-            return(true);
-        } catch(error){
+        if(channel){
             throw new InternalServerErrorException("Something went wrong when creating channel") 
         }
+
+        this.StringifyId(channel);
+    
+        return(channel as any as ChannelDto);
     }
 
     async update(channelData: UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdateChannelImgDto): Promise<ChannelDto>{
-    
-        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, {
-            runValidators: true,
-            new: true,
-        })
-        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], updatedChannel);
-        return parsedChannels;
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, defaultOptions)
+        return updatedChannel as any as ChannelDto;
     }
 
     async messageCount(channelId: string){
-        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {totalMessages: 1}})
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {totalMessages: 1}}, defaultOptions)
         return updatedChannel;
     }
 
     async subscribe(channelId: string): Promise<ChannelDto>{
-        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: 1}}, {
-            runValidators: true,
-            new: true,
-        })
-
-        const parsedChannels = await this.mongoParser.parse<ChannelDto>(['createdAt', '__v'], updatedChannel);
-        return parsedChannels;
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: 1}}, defaultOptions)
+        return updatedChannel as any as ChannelDto;
     }
 
     private StringifyId(channels: any){

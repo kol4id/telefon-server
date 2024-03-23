@@ -1,15 +1,15 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException} from "@nestjs/common";
 import { Message } from "./shemas/message.schema";
 import { Model} from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
 import { MessageDto } from "src/messages/dto/message.dto";
-import { MongoParser } from "src/mongo/mongoObjectParser";
 import { CreateMessageDto } from "src/messages/dto/create-message.dto";
 import { UpdateMediaDto, UpdateMessageContentDto } from "./dto/update-message.dto";
 
 
 const messageProjection = {
-    id: 1,
+    _id: 0,
+    id: '$_id',
     channelId: 1,
     creatorId: 1,
     content: 1,
@@ -19,26 +19,29 @@ const messageProjection = {
     createdAt: 1,
 }
 
+const defaultOptions = {
+    runValidators: true,
+    new: true,
+    lean: true,
+    projection: messageProjection,
+}
+
 @Injectable()
-export class MongoMessageService{
+export class MessageRepository{
     constructor(
         @InjectModel(Message.name) private messageModel: Model<Message>,
     ){}
 
     async findOne(messageId: string): Promise<MessageDto>{
-
-        const message = await this.messageModel.findById(messageId, messageProjection).exec();
-        this.StringifyId(message);
-
+        const message = await this.messageModel.findById(messageId, messageProjection).lean().exec(); 
         if(!message){
-            throw new BadRequestException('There is no such message')
+            throw new NotFoundException(`There is no such message ${messageId}`); 
         }
         
         return message as any as MessageDto;
     }
 
     async findManyByChannel(channelId: string, chunkNumber: number, limit: number, sort: 'asc' | 'desc'):Promise<MessageDto[]>{
-
         const skip = (chunkNumber - 1) * limit;
         const messages = await this.messageModel
             .find({channelId}, messageProjection)
@@ -47,34 +50,25 @@ export class MongoMessageService{
             .limit(limit)
             .lean()
             .exec()
-
-        this.StringifyId(messages);
         
         return messages as any as MessageDto[];
     }
 
     async create(message: CreateMessageDto, userId: string): Promise<MessageDto>{
         const newMessage = {
-            channelId: message.channelId,
-            content: message.content,
-            hasMedia: message.hasMedia,
+            ...message,
             creatorId: userId,
             edited: false,
         }
 
-        const created = await this.messageModel.create(newMessage)
+        const created = await this.messageModel.create(newMessage);
         this.StringifyId(created);
-    
+
         return created as any as MessageDto;
     }
 
     async update(messageData: UpdateMediaDto | UpdateMessageContentDto): Promise<MessageDto>{
-        const updatedChannel = await this.messageModel.findByIdAndUpdate(messageData.id, {...messageData}, {
-            runValidators: true,
-            new: true,
-        })
-
-        this.StringifyId(updatedChannel);
+        const updatedChannel = await this.messageModel.findByIdAndUpdate(messageData.id, {...messageData}, defaultOptions);
         return updatedChannel as any as MessageDto;
     }
     
