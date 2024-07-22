@@ -5,18 +5,46 @@ import { Document } from "mongoose"
 @Schema({
     timestamps: true
 })
-export class User extends Document{
+export class User extends Document{   
     @Prop()
-    name: string;
+    userName: string;
+
+    @Prop()
+    @Optional()
+    firstName: string;
+
+    @Prop()
+    @Optional()
+    lastName: string;
 
     @Prop({unique: [true, 'Duplicate email entered']})
     email: string;
+
+    @Prop()
+    password: string;
     
+    @Prop()
+    @Optional()
+    photoUrl: string;
+
     @Prop()
     @Optional()
     subscriptions: string[];
 
     @Prop()
-    password: string;
+    @Optional()
+    favorite: string[];
+
+    @Prop()
+    @Optional()
+    blacklist: string[];
+
+    @Prop({type: Map})
+    @Optional()
+    lastReads: Map<string, number>;
+
+    @Prop()
+    @Optional()
+    lastLogin: Date;
 }
 export const UserSchema = SchemaFactory.createForClass(User)
