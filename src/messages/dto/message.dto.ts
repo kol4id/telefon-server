@@ -15,6 +15,12 @@ export class MessageDto{
     readonly content: string;
 
     @IsBoolean()
+    isRead: string;
+
+    @IsDate()
+    readTime: Date;
+
+    @IsBoolean()
     readonly edited: boolean;
 
     @IsDate()
@@ -22,6 +28,9 @@ export class MessageDto{
 
     @IsBoolean()
     readonly hasMedia: boolean;
+
+    @IsNumber()
+    mediaLenght: number;
 
     @IsOptional()
     readonly mediaUrls: string[];

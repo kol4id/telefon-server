@@ -7,15 +7,18 @@ import { TokenModule } from 'src/token/token.module';
 import { CloudinaryModule } from 'src/cloudinary/сloudinary.module';
 import { RealtimeModule } from 'src/realtime/realtime.module';
 import { ChannelsModule } from 'src/channels/channels.module';
+import { UserModule } from 'src/user/user.module';
+import { MediaModule } from 'src/media/media.module';
 
 @Module({
   imports: [
     MongoModule,
     AuthModule,
     TokenModule,
-    CloudinaryModule,
+    MediaModule,
     RealtimeModule,
-    ChannelsModule
+    ChannelsModule,
+    UserModule
   ],
   providers: [MessagesService],
   controllers: [MessagesController]

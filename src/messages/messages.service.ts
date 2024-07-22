@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable} from '@nestjs/common';
 import { MessageDto } from './dto/message.dto';
-import { GetMessagesDto } from './dto/get-messages.dto';
+import { GetMessagesByDateDto, GetMessagesDto } from './dto/get-messages.dto';
 import { MessageRepository } from 'src/mongo/mongo-message.service';
 import { CreateMessageDto } from './dto/create-message.dto';
-import { UserDto } from 'src/mongo/dto/user.dto';
+import { UserDto } from 'src/user/dto/user.dto';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { DeleteMessagesDto } from './dto/delete-message.dto';
@@ -13,52 +13,61 @@ import { ChannelsService } from 'src/channels/channels.service';
 export class MessagesService {
     constructor(
         private channelsService: ChannelsService,
-        private mongoMessageService: MessageRepository,
+        private messageRepository: MessageRepository,
         private realtimeService: RealtimeGateway
     ){}
 
+    
     async getMessages(params: GetMessagesDto): Promise<MessageDto[]>{
-        const limit: number = 50;
-        const messages = await this.mongoMessageService.findManyByChannel(params.channelId, 
-                                                                parseInt(params.chunkNumber), 
-                                                                limit,
-                                                                'desc');
-
-        return messages
+        return await this.messageRepository.findManyByDate(params.channelId, params.limit, params.startDate, params.endDate);
     }
 
-    async getLastMessages(user: UserDto, chunk: number, limit: number): Promise<MessageDto[][]>{
-        // const CHUNK = 1;
-        // const LIMIT = 50;
-        const messages = await Promise.all(
-            user.subscriptions.map(async(subscription) => {
-                return await this.mongoMessageService
-                                                .findManyByChannel( subscription, 
-                                                                    chunk, 
-                                                                    limit,
-                                                                    'desc')
+    async getLastReadMessages(user: UserDto, limit: number): Promise<MessageDto[][]>{
+        // const halfLimit = Math.floor(limit / 2);
+        const messages: MessageDto[][] = await Promise.all(
+            user.subscriptions.map(async(subscription)=>{
+                const messagesHigh = await this.messageRepository.findManyByDate(subscription, limit, undefined , user.lastReads?.[subscription]);
+                // const messagesLow = await this.messageRepository.findManyByDate(subscription, halfLimit, user.lastReads[subscription], undefined);
+                return messagesHigh;
             })
         )
-
-        // console.log(messages);
         return messages;
     }
+
+    async getLastMessages(user: UserDto): Promise<MessageDto[][]>{
+        const messages = await Promise.all(
+            user.subscriptions.map(async(subscription) => {
+                const searchParams: GetMessagesDto = {
+                    channelId: subscription,
+                    limit: 1
+                }
+                return await this.getMessages(searchParams)
+            })
+        )
+        return messages;
+    }
+
+    // async getMessagesByDate(params: GetMessagesByDateDto): Promise<MessageDto[]>{
+    //     const sortFilter = params.searchSide === 'earlier' ? 'lt' : "gt"
+    //     const messages = await this.messageRepository.findManyByDate(params.channelId, params.searchDate, parseInt(params.limit), sortFilter)
+    //     return messages;
+    // }
     
     async create(message: CreateMessageDto, user: UserDto): Promise<MessageDto | string>{
 
-        const newMessage = await this.mongoMessageService.create(message, user.id);
+        const newMessage = await this.messageRepository.create(message, user.id);
         if (newMessage.hasMedia){
             return newMessage.id;
         }
 
-        this.realtimeService.sendToRoom(newMessage.channelId, {eventType: 'onMessageCreate', data: newMessage});
-        this.channelsService.updateLastMessage({id: message.channelId, lastMessageId: newMessage.id}, user)
+        this.realtimeService.sendToRoom(newMessage.channelId, 'messageCreate', newMessage);
+        this.channelsService.updateLastMessage({id: message.channelId, lastMessageId: newMessage.id}, user);
         await this.channelsService.UpdateTotalMessages(message.channelId);        
         return newMessage
     }
 
     async createMedia(mediaLinks: string[], messageId: string, user: UserDto): Promise<MessageDto>{
-        const message: MessageDto = await this.mongoMessageService.findOne(messageId);
+        const message: MessageDto = await this.messageRepository.findOne(messageId);
         if(message.creatorId !== user.id){
             throw new BadRequestException("You don't have such access rights")
         }
@@ -70,12 +79,12 @@ export class MessagesService {
             mediaUrls: mediaLinks
         }
 
-        const newMessageWithMedia = await this.mongoMessageService.update(createMedia);
+        const newMessageWithMedia = await this.messageRepository.update(createMedia);
         return newMessageWithMedia;
     }
 
     async update(messageData: UpdateMessageContentDto, user: UserDto): Promise<MessageDto>{
-        const message: MessageDto = await this.mongoMessageService.findOne(messageData.id);
+        const message: MessageDto = await this.messageRepository.findOne(messageData.id);
         if(message.creatorId !== user.id){
             throw new BadRequestException("You don't have such access rights")
         }
@@ -86,7 +95,7 @@ export class MessagesService {
             edited: true,
         }
 
-        const updatedMessage = await this.mongoMessageService.update(updateData);
+        const updatedMessage = await this.messageRepository.update(updateData);
         return updatedMessage;
     }
 
@@ -95,6 +104,11 @@ export class MessagesService {
             throw new BadRequestException("You don't have such access rights")
         }
 
-        return await this.mongoMessageService.delete(messageData.messageId);
+        return await this.messageRepository.delete(messageData.messageId);
+    }
+
+    async markMessagesAsRead(messages: MessageDto[]): Promise<MessageDto[]>{
+        const updatedMessages = await this.messageRepository.updateReadMany(messages)
+        return updatedMessages
     }
 }
