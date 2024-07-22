@@ -2,12 +2,11 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { UserRepository } from "src/mongo/mongo-user.service";
 import { TokenService } from "src/token/token.service";
 
-
 @Injectable()
 export class CookieRefreshGuard implements CanActivate{
     constructor(
         private tokenService: TokenService,
-        private mongoUserService: UserRepository,
+        private userRepository: UserRepository,
     ){}
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -24,8 +23,8 @@ export class CookieRefreshGuard implements CanActivate{
             throw new UnauthorizedException('RefreshToken: refreshToken cookie is not valid');    
         }
         const data = await this.tokenService.VerifyTokenAsync(unsignCookie.value, 'refresh');
-        const user = await this.mongoUserService.findById(data.id);
-
+        const user = await this.userRepository.findById(data.id);
+        
         if (!user){
             throw new UnauthorizedException('RefreshToken: There is no such user') 
         }
