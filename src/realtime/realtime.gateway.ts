@@ -1,56 +1,55 @@
-import { ConnectedSocket, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Redis } from 'ioredis';
 import { Server, Socket } from 'socket.io';
-import { ServerToClientEvent } from './events';
+import { ServerToClientEvents, ServerToClientMessageType } from './events';
 import { SocketWithAuth } from './socket-io-adapter';
 import { ServiceUnavailableException } from '@nestjs/common';
-import { MongoUserService } from 'src/mongo/mongo-user.service';
+import { UserRepository } from 'src/mongo/mongo-user.service';
+import { MessageDto } from 'src/messages/dto/message.dto';
+import { RealtimeService } from './realtime.service';
 
 @WebSocketGateway({cors: true})
 export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit{
-  constructor(private mongoUserService: MongoUserService){}
-
-  @WebSocketServer()
-  server: Server<any, ServerToClientEvent>;
-
-  afterInit(client: Socket){
-    console.log('started')
-  }
+  constructor(
+    private mongoUserService: UserRepository,
+    private realtimeService: RealtimeService,
+  ){}
 
   private readonly redisClient = new Redis({
     port: 6000,
   });
+  
+  @WebSocketServer()
+  server: Server<any, ServerToClientEvents>;
+
+  afterInit(client: Socket){
+  }
 
   async handleConnection(client: SocketWithAuth){
-
-    console.log(`Client connected ${client.id}`)
     this.addUser(client.userId, client.id);
     await this.joinRooms(client);
     this.server.to(client.id).emit('personalMessage', 'Hiiii')
   }
 
-  handleDisconnect(client: SocketWithAuth){
-    console.log(`Client disconected ${client.id}`)
-    this.server.to(client.id).emit('personalMessage', 'By By')
+  async handleDisconnect(client: SocketWithAuth){
+    const userId = await this.redisClient.get(client.id);
+    this.realtimeService.updateUserLastLogin(userId);
+    
+    this.server.to(client.id).emit('personalMessage', 'By By');
   }
 
   @SubscribeMessage('message')
-  handleMessage(client: Socket, payload: { room: string, message: string }): void {
-    console.log(`Recived message from ${client.id}: ${payload}`)
-    // this.server.to(client.id).emit('personalMessage', 'Privet!')
-    // console.log(client.rooms)
+  async handleMessage(client: Socket, payload: { room: string, message: string }): Promise<void>{
     client.to(payload.room).emit('messageFromRoom', payload.message);
-    //this.server.emit('personalMessage', payload)
   }
 
-  // handleMessageUpdate(client: Socket, payload: { room: string, message: string }): void {
-  //   this.server.to(payload.room).emit('messageUpdate', payload.message);
-  //   client.to(payload.room).emit('messageFromRoom', payload.message);
-  //   //this.server.emit('personalMessage', payload)
-  // }
+  @SubscribeMessage('messagesRead')
+  async handleMessageRead(client: Socket, payload: MessageDto[]): Promise<void>{
 
-  async sendToRoom(roomName: string, message: any){
-    this.server.in(roomName).emit('personalMessage', message);
+    const messages = await this.realtimeService.setMessagesRead(await this.getUser(client.id) , payload, {group: true});
+    Object.entries(messages).forEach(([key, value]) => {
+      this.sendToRoom(key, "messagesRead", value)
+    });
   }
 
   async addUser(userId: string, socketId: string): Promise<boolean>{
@@ -70,9 +69,12 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   async joinRooms(client: SocketWithAuth): Promise<void>{
     // const userId = await this.getUser(client.id);
     const user = await this.mongoUserService.findById(client.userId);
-    console.log(user)
     for (const room of user.subscriptions){
       client.join(room);
     }
+  }
+
+  async sendToRoom(roomName: string, event: ServerToClientMessageType, message: any){
+    this.server.in(roomName).emit(event, message);
   }
 }
