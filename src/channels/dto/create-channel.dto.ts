@@ -1,6 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, IsEmpty } from "class-validator";
-import { User } from "src/auth/schemas/user.schema";
+import { IsNotEmpty, IsString } from "class-validator";
 
 export class CreateChannelDto {
     @ApiProperty({type: 'string', example: 'Telegram'})
@@ -8,6 +7,8 @@ export class CreateChannelDto {
     @IsString()
     readonly title: string;
 
-    @IsEmpty({message: 'you cannot pass user id'})
-    readonly creatorId: User;
+    @ApiProperty({type: 'string', example: '6560c5cbda0824fc8725f03b'})
+    @IsNotEmpty()
+    @IsString()
+    readonly creatorId: string;
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Put, Query, Req, UseGuards} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards} from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 
@@ -15,14 +15,22 @@ import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, Updat
 export class ChannelsController {
     constructor(
         private readonly channelsService: ChannelsService, 
-        private readonly cloudinaryService: CloudinaryService,
     ){}
 
     @Get('all')
     async GetAllChannelsForUser(@Req() req): Promise<ChannelDto[]>{
-
         const channels = await this.channelsService.findAllForUser(req.user);
         return channels
+    }
+
+    @Get(':id')
+    async GetChannel(@Param() params: any): Promise<ChannelDto>{
+        return await this.channelsService.get(params.id);
+    }
+
+    @Get('search')
+    async SearchMany(@Query('subString') subString: string){
+        return await this.channelsService.searchMany(subString)
     }
 
     @Post()
