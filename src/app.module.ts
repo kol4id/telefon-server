@@ -12,6 +12,12 @@ import { TrainiModule } from './traini/traini.module';
 import { TokenModule } from './token/token.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { MessagesModule } from './messages/messages.module';
+import { UserModule } from './user/user.module';
+import { UpdatesController } from './updates/updates.controller';
+import { UpdatesModule } from './updates/updates.module';
+import { MediaModule } from './media/media.module';
+import { LoggerModule } from './logger/logger.module';
+
 
 @Module({
   imports: [ 
@@ -28,7 +34,11 @@ import { MessagesModule } from './messages/messages.module';
     TrainiModule,
     TokenModule,
     RealtimeModule,
-    MessagesModule
+    MessagesModule,
+    UserModule,
+    UpdatesModule,
+    MediaModule,
+    LoggerModule
   ],
   controllers: [AppController],
   providers: [AppService],
