@@ -9,6 +9,7 @@ import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
 const channelProjection = {
     _id: 0,
     id: '$_id',
+    channelName: 1,
     title: 1,
     imgUrl: 1,
     subscribers: 1,
@@ -32,9 +33,9 @@ export class ChannelRepository {
 
     async findById(id: string): Promise<ChannelDto>{
         const channel = await this.channelModel.findById(id, channelProjection).lean();  
-        if (!channel){
-            throw new NotFoundException(`there is no such channel ${id}`)
-        }
+        // if (!channel){
+        //     throw new NotFoundException(`there is no such channel ${id}`)
+        // }
 
         return channel as any as ChannelDto;
     }
@@ -43,6 +44,18 @@ export class ChannelRepository {
         const channels = await this.channelModel.find({_id: {$in: channelsList}}, channelProjection).lean();
         
         return channels as any as ChannelDto[];
+    }
+
+    async findMultipleByName(subString: string, limit: number):Promise<ChannelDto[]> {
+        const regex = new RegExp(subString, 'i');
+        const channels = this.channelModel.find({channelName: {$regex: regex}}, channelProjection).limit(limit).lean().exec()
+        return channels as any as ChannelDto[]
+    }
+
+    async findMultipleByTitle(subString: string, limit: number):Promise<ChannelDto[]> {
+        const regex = new RegExp(subString, 'i');
+        const channels = this.channelModel.find({title: {$regex: regex}}, channelProjection).limit(limit).lean().exec()
+        return channels as any as ChannelDto[]
     }
 
     async create(channelData: CreateChannelDto, userId: string): Promise<ChannelDto>{
@@ -59,9 +72,26 @@ export class ChannelRepository {
         return(channel as any as ChannelDto);
     }
 
-    async update(channelData: UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdateChannelImgDto): Promise<ChannelDto>{
+    async createEmpty(userId: string): Promise<ChannelDto>{
+        const channel = await this.channelModel.create({
+            creatorId: userId,
+            channelType: 'dm',
+            isPrivate: false,
+            totalMessages: 0,
+            subscribers: 0,
+            moderatorsId: []
+        });
+        return channel as any as ChannelDto;
+    }
+
+    async update(channelData: ChannelDto| UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdateChannelImgDto): Promise<ChannelDto>{
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, defaultOptions)
         return updatedChannel as any as ChannelDto;
+    }
+
+    async findByCreatorAndUpdate(creatorId: string, channelData: ChannelDto): Promise<ChannelDto>{
+        const updatedChannel = this.channelModel.findOneAndUpdate({creatorId: creatorId}, {...channelData}, defaultOptions);
+        return updatedChannel as any as ChannelDto
     }
 
     async messageCount(channelId: string){
