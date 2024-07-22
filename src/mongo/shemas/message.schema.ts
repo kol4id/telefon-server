@@ -16,6 +16,12 @@ export class Message extends Document{
     content: string;
 
     @Prop()
+    isRead: string;
+
+    @Prop()
+    readTime: Date;
+
+    @Prop()
     edited: boolean;
 
     @Prop()
@@ -23,7 +29,7 @@ export class Message extends Document{
 
     @Prop()
     @Optional()
-    mediaLenght: boolean;
+    mediaLenght: number;
 
     @Prop()
     @Optional()
