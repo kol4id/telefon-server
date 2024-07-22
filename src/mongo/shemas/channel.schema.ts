@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory} from '@nestjs/mongoose'
-import mongoose, { HydratedDocument} from "mongoose";
-import { User } from 'src/auth/schemas/user.schema';
+import { HydratedDocument} from "mongoose";
 import { Optional } from '@nestjs/common';
 
 
@@ -12,6 +11,18 @@ export type ChannelDocument = HydratedDocument<Channel>;
 export class Channel{
     @Prop()
     title: string;
+
+    @Prop()
+    channelName: string;
+
+    @Prop()
+    creatorId: string;
+
+    @Prop()
+    isPrivate: boolean;
+
+    @Prop()
+    channelType: string;
 
     @Prop()
     @Optional()
@@ -27,14 +38,15 @@ export class Channel{
 
     @Prop()
     @Optional()
+    totalMessages: number;
+
+    @Prop()
+    @Optional()
     moderatorsId: string[];
 
     @Prop()
     @Optional()
     lastMessageId: string;
-
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User'})
-    creatorId: User;
 }
 
 export const ChannelSchema = SchemaFactory.createForClass(Channel);

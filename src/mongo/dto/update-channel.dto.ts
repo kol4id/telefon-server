@@ -1,7 +1,6 @@
 import { Optional } from "@nestjs/common";
 import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsEmpty, IsNotEmpty, IsString } from "class-validator";
-import { User } from "src/auth/schemas/user.schema";
 
 export class UpdateChannelDto {
     @ApiProperty({type: 'string', example: '6577417dd6769aad5c4ba04e'})
@@ -18,8 +17,9 @@ export class UpdateChannelDto {
     @IsString()
     readonly description: string;
     
-    @IsEmpty({message: 'you cannot pass user id'})
-    readonly creatorId: User;
+    @ApiProperty({type: 'string', example: '6577417dd6769aad5c4ba04e'})
+    @IsNotEmpty({message: 'creator ID requred to update'})
+    readonly creatorId: string;
 }
 
 export class UpdateChannelImgDto {
