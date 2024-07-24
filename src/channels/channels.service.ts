@@ -7,6 +7,7 @@ import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, Upd
 import { UserRepository } from 'src/mongo/mongo-user.service';
 import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { MediaService } from 'src/media/media.service';
+import { performance } from 'perf_hooks';
 
 @Injectable()
 export class ChannelsService {
@@ -40,24 +41,20 @@ export class ChannelsService {
         return channel
     }
 
-    async searchMany(subString: string): Promise<ChannelDto>{
+    async searchMany(subString: string): Promise<ChannelDto[]>{
         const byName = this.channelRepository.findMultipleByName(subString, 10);
         const byTitle = this.channelRepository.findMultipleByTitle(subString, 10);
-        const userByUsername = this.userRepository.findManyByUsername(subString, 10);
+        //const userByUsername = this.userRepository.findManyByUsername(subString, 10);
 
-        const channels = await Promise.all([byName, byTitle, userByUsername])
-        let usersAsChannel = [];
+        const channels = await Promise.all([byName, byTitle])
+        const channelsConcated = channels[0].concat(channels[1]);
 
-        // channels[2] == userByUsername
-        if (channels[2]) {
-            usersAsChannel = channels[2].map(user =>
-                transformUserToChannel(user)
-            )
-        }
-        this.logger.debug(usersAsChannel)
-        
-        const channelsConcated = channels[0].concat(channels[1].concat(usersAsChannel));
-        return channelsConcated as any
+        const uniqueMap = new Map<string, ChannelDto>();
+        channelsConcated.forEach(channel => uniqueMap.set(channel.id.toString(), channel))
+        const uniqueChannels = Array.from(uniqueMap.values());
+
+        this.logger.debug(uniqueChannels)
+        return uniqueChannels as any as ChannelDto[];
     }
 
     async updateGeneral(channelParams: UpdateChannelDto, user: UserDto): Promise<UpdateChannelDto> {
