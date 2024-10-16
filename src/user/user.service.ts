@@ -27,15 +27,17 @@ export class UserService {
 
     async updateLastRead(user: UserDto, message: MessageDto): Promise<UserDto>{
         const updatedUser = user;
-        updatedUser.lastReads[message.channelId] = message.createdAt;
+        updatedUser.lastReads[message.chatId] = message.createdAt;
         return await this.userRepository.update(updatedUser);
     }
 
     async update(user: UserDto): Promise<UserDto>{
+        this.logger.debug(user)
         const updated = await this.userRepository.update(user);
         this.logger.debug(JSON.stringify(updated));
+        const lastName = user.lastName == undefined ? " " : user.lastName 
         this.channelRepository.findByCreatorAndUpdate(user.id, {
-            title: (user.firstName + ' ' + user.lastName),
+            title: (user.firstName + ' ' + lastName),
             channelName: user.userName,
             imgUrl: user.photoUrl,
         })
@@ -57,4 +59,5 @@ export class UserService {
         this.channelRepository.findByCreatorAndUpdate(user.id, {imgUrl: updated.photoUrl});
         return updated; 
     }
+
 }
