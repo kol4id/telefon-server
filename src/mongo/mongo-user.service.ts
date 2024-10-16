@@ -5,10 +5,9 @@ import { Model } from "mongoose";
 import { UserDto } from "../user/dto/user.dto";
 import { SignupUserDto } from "src/auth/dto/auth.dto";
 import { AuthUserDto } from "src/auth/dto/auth.dto";
+import idProjection from "./mongo-projection-id-config";
 
 const userProjection = {
-    _id: 0,
-    id: '$_id',
     userName: 1,
     firstName: 1,
     lastName: 1,
@@ -18,7 +17,9 @@ const userProjection = {
     favorite: 1,
     blacklist: 1,
     lastReads: 1,
-    lastLogin: 1
+    lastLogin: 1,
+    personalChannel: 1,
+    ...idProjection,
 }
 
 const authProjection = {
@@ -40,6 +41,15 @@ export class UserRepository {
 
     async findById(id: string): Promise<UserDto>{
         const user = await this.userModel.findById(id, userProjection).lean();
+        if(!user){
+            throw new NotFoundException(`There is no such user ${id}`);
+        }
+
+        return user as any as UserDto;
+    }
+
+    async findByIdNoLean(id: string): Promise<UserDto>{
+        const user = await this.userModel.findById(id, userProjection).exec();
         if(!user){
             throw new NotFoundException(`There is no such user ${id}`);
         }
@@ -109,8 +119,9 @@ export class UserRepository {
     }
 
     async create(user: SignupUserDto): Promise<UserDto>{
-        const userData = await this.userModel.create({...user});
-        this.StringifyId(userData);
+        const data = await this.userModel.create(user);
+        const userData = await this.findById(data._id);
+        // this.StringifyId(userData);
         if (!userData){ throw new ServiceUnavailableException("Something go wrong while creating new user") }
         return userData as any as UserDto;
     }
@@ -122,25 +133,35 @@ export class UserRepository {
         })
 
         this.StringifyId(userData);
+        console.log(userData)
+        // this.StringifyId(userData);
         if(!userData){ throw new ServiceUnavailableException("Something go wrong while updating user") }
         return userData as any as UserDto;
     }
 
-    async addSubscription(userId: string, channelId: string): Promise<boolean>{
-        const user = await this.userModel.findById(userId).lean();
+    async addSubscription(userId: string, channelId: string): Promise<UserDto>{
+        const user = await this.userModel.findById(userId).lean().exec();
         if (user.subscriptions.includes(channelId)){
             throw new BadRequestException("already subscribed");           
         }
 
-        const userData = await this.userModel.findByIdAndUpdate(userId, {$push:{subscriptions: channelId}}, {
+        const oldsubs = user.subscriptions;
+        user.subscriptions = [...oldsubs, channelId]
+        const userData = await this.userModel.findByIdAndUpdate(userId, user, {
             ...defaultOptions,
             projection: userProjection,
-        })       
+            new: true
+        }).lean().exec()     
+        return userData as any as UserDto
+    }
 
-        if(userData){
-            return true
+    async addDmChat(userId: string, channelId: string, chatId: string): Promise<UserDto>{
+        const user = await this.userModel.findById(userId);
+        if (!user.dmChats){
+            user.dmChats = new Map<string, string>;
         }
-        return false
+        user.dmChats.set(channelId, chatId);
+        return this.userModel.findByIdAndUpdate(userId, {$set: {dmChats: user.dmChats}});
     }
 
     async getLastReads (userId: string, channelId: string): Promise<UserDto> {

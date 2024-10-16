@@ -37,6 +37,11 @@ export class UserDto{
     @IsArray()
     readonly subscriptions: string[];
 
+    // @ApiProperty({type: 'Map<string, string>', example: [{'65831453ec90aea7e5b457e9': '658312cdec90aea7e5b457e6'}]})
+    // @IsOptional()
+    // @IsArray()
+    // readonly dmChats: Map<string, string>
+
     @ApiProperty({type: 'string[]', example: ['658312cdec90aea7e5b457e6']})
     @IsOptional()
     @IsArray()
@@ -54,6 +59,10 @@ export class UserDto{
     @ApiProperty({type: 'date', example: ['2024-05-21T19:27:30.950+00:00']})
     @IsOptional()
     readonly lastLogin: Date;
+
+    @ApiProperty({type: 'string', example: ['65831453ec90aea7e5b457e9']})
+    @IsOptional()
+    readonly personalChannel: string;
 }
 
 
@@ -65,10 +74,10 @@ export function transformUserToChannel(user: UserDto): ChannelDto {
         imgUrl: user.photoUrl,
         subscribers: 0, // Значение по умолчанию
         moderatorsId: [], // Значение по умолчанию
-        lastMessageId: '', // Значение по умолчанию
+        lastMessage: new Date(), // Значение по умолчанию
         updatedAt: new Date(),
         creatorId: user.id,
-        channelType: 'dm',
+        channelType: 'user',
         isPrivate: true,
         description: `${user.firstName} ${user.lastName}'s channel`
     };

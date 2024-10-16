@@ -31,6 +31,10 @@ export class User extends Document{
     @Optional()
     subscriptions: string[];
 
+    @Prop({type: Map})
+    @Optional()
+    dmChats: Map<string, string>
+
     @Prop()
     @Optional()
     favorite: string[];
@@ -46,5 +50,9 @@ export class User extends Document{
     @Prop()
     @Optional()
     lastLogin: Date;
+
+    @Prop()
+    @Optional()
+    personalChannel: string;
 }
 export const UserSchema = SchemaFactory.createForClass(User)
