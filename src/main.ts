@@ -29,11 +29,14 @@ async function bootstrap() {
   }))
 
   app.enableCors({
+    preflightContinue: true,
     credentials: true,
-    origin: [process.env.FRONTEND_URL_PROD, process.env.FRONTEND_URL_DEV],
+    origin: '*',
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   });
 
+
+// [process.env.FRONTEND_URL_PROD, process.env.FRONTEND_URL_DEV, `${process.env.FRONTEND_URL_DEV}/`]
   const config = new DocumentBuilder()
     .setTitle('telefon example')
     .setDescription('The telefon API description')
@@ -56,6 +59,6 @@ async function bootstrap() {
   })
 
   app.useWebSocketAdapter(new SocketIOAdapter(app));
-  await app.listen(4200, 'localhost');
+  await app.listen(4200, '0.0.0.0');
 }
 bootstrap();
