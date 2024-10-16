@@ -13,10 +13,10 @@ import { TokenModule } from './token/token.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { MessagesModule } from './messages/messages.module';
 import { UserModule } from './user/user.module';
-import { UpdatesController } from './updates/updates.controller';
 import { UpdatesModule } from './updates/updates.module';
 import { MediaModule } from './media/media.module';
 import { LoggerModule } from './logger/logger.module';
+import { ChatsModule } from './chats/chats.module';
 
 
 @Module({
@@ -38,7 +38,8 @@ import { LoggerModule } from './logger/logger.module';
     UserModule,
     UpdatesModule,
     MediaModule,
-    LoggerModule
+    LoggerModule,
+    ChatsModule
   ],
   controllers: [AppController],
   providers: [AppService],
