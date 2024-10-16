@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { UserRepository } from "src/mongo/mongo-user.service";
 import { TokenService } from "src/token/token.service";
 
@@ -8,6 +8,9 @@ export class CookieRefreshGuard implements CanActivate{
         private tokenService: TokenService,
         private userRepository: UserRepository,
     ){}
+
+    private logger = new Logger(CookieRefreshGuard.name);
+
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
         const refreshCookie = request.cookies['refreshToken'];
@@ -15,13 +18,13 @@ export class CookieRefreshGuard implements CanActivate{
         if (!refreshCookie){
             throw new UnauthorizedException('RefreshToken: refreshToken cookie is empty');
         }
-
         let unsignCookie: any;
         try {
             unsignCookie = request.unsignCookie(refreshCookie);
         } catch (error: unknown) {
             throw new UnauthorizedException('RefreshToken: refreshToken cookie is not valid');    
         }
+
         const data = await this.tokenService.VerifyTokenAsync(unsignCookie.value, 'refresh');
         const user = await this.userRepository.findById(data.id);
         

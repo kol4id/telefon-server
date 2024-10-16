@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
 import { UserDto } from 'src/user/dto/user.dto';
 import { UserService } from './user.service';
@@ -13,6 +13,8 @@ export class UserController {
         private userService: UserService,
         private mediaService: MediaService
     ){}
+
+    private logger = new Logger(CookieAccessGuard.name);
 
     @Get()
     async GetUser(
@@ -39,6 +41,7 @@ export class UserController {
     async UpdateUser(
         @Body() userData: UserDto
     ): Promise<UserDto>{
+        this.logger.debug('userUpdate')
         return await this.userService.update(userData);
     }
 
