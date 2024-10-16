@@ -1,14 +1,14 @@
-import { Injectable, InternalServerErrorException, NotFoundException} from "@nestjs/common";
+import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Channel } from "./shemas/channel.schema";
 import { Model } from "mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
-import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto} from "./dto/update-channel.dto";
+import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto } from "./dto/update-channel.dto";
 import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
+import idProjection from "./mongo-projection-id-config";
 
 const channelProjection = {
-    _id: 0,
-    id: '$_id',
+    ...idProjection,
     channelName: 1,
     title: 1,
     imgUrl: 1,
@@ -16,6 +16,10 @@ const channelProjection = {
     moderatorsId: 1,
     lastMessageId: 1,
     updatedAt: 1,
+    creatorId: 1, 
+    description: 1,
+    isPrivte: 1,
+    channelType: 1,
 }
 
 const defaultOptions = {
@@ -37,6 +41,11 @@ export class ChannelRepository {
         //     throw new NotFoundException(`there is no such channel ${id}`)
         // }
 
+        return channel as any as ChannelDto;
+    }
+
+    async findByCreator(creatorId: string): Promise<ChannelDto>{
+        const channel = await this.channelModel.findOne({creatorId: creatorId}, channelProjection).lean();
         return channel as any as ChannelDto;
     }
 
@@ -73,13 +82,14 @@ export class ChannelRepository {
     }
 
     async createEmpty(userId: string): Promise<ChannelDto>{
+        const DEFAULT_BLANK_PHOTO_URL = "https://res.cloudinary.com/dz57wrthe/image/upload/v1727736783/blank.jpg";
         const channel = await this.channelModel.create({
             creatorId: userId,
-            channelType: 'dm',
+            channelType: 'user',
             isPrivate: false,
-            totalMessages: 0,
             subscribers: 0,
-            moderatorsId: []
+            moderatorsId: [],
+            imgUrl: DEFAULT_BLANK_PHOTO_URL
         });
         return channel as any as ChannelDto;
     }

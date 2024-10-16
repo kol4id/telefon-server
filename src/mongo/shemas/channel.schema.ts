@@ -38,15 +38,11 @@ export class Channel{
 
     @Prop()
     @Optional()
-    totalMessages: number;
-
-    @Prop()
-    @Optional()
     moderatorsId: string[];
 
     @Prop()
     @Optional()
-    lastMessageId: string;
+    lastMessage: Date;
 }
 
 export const ChannelSchema = SchemaFactory.createForClass(Channel);

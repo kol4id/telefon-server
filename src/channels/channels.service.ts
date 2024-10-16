@@ -5,15 +5,15 @@ import { ChannelRepository } from 'src/mongo/mongo-channel.service';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
 import { UserRepository } from 'src/mongo/mongo-user.service';
-import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { MediaService } from 'src/media/media.service';
-import { performance } from 'perf_hooks';
+import { ChatRepository } from 'src/mongo/mongo-chat.service';
 
 @Injectable()
 export class ChannelsService {
     constructor(
         private channelRepository: ChannelRepository,
         private userRepository: UserRepository,
+        private chatRepository: ChatRepository,
         private mediaService: MediaService
     ){}
 
@@ -22,14 +22,20 @@ export class ChannelsService {
     // async findAll(query: Query): Promise<Channel[]> {
 
         
-    // }
+    // 
 
     async findAllForUser(user: UserDto): Promise<ChannelDto[]>{
         return await this.channelRepository.findMultipleChannelsById(user.subscriptions);
     }
 
+    async findByCreator(creatorId: string): Promise<ChannelDto>{
+        return this.channelRepository.findByCreator(creatorId);
+    }
+
     async create(channelData: CreateChannelDto, user: UserDto): Promise<ChannelDto>{
-        return this.channelRepository.create(channelData, user.id)
+        const channel = await this.channelRepository.create(channelData, user.id);
+        await this.chatRepository.create([channel.id]);
+        return channel;
     }
 
     async get(channelId: string): Promise<ChannelDto>{
@@ -41,7 +47,7 @@ export class ChannelsService {
         return channel
     }
 
-    async searchMany(subString: string): Promise<ChannelDto[]>{
+    async searchMany(subString: string, user?: UserDto): Promise<ChannelDto[]>{
         const byName = this.channelRepository.findMultipleByName(subString, 10);
         const byTitle = this.channelRepository.findMultipleByTitle(subString, 10);
         //const userByUsername = this.userRepository.findManyByUsername(subString, 10);
@@ -51,7 +57,9 @@ export class ChannelsService {
 
         const uniqueMap = new Map<string, ChannelDto>();
         channelsConcated.forEach(channel => uniqueMap.set(channel.id.toString(), channel))
-        const uniqueChannels = Array.from(uniqueMap.values());
+        let uniqueChannels = Array.from(uniqueMap.values());
+
+        if (user) uniqueChannels = uniqueChannels.filter(channel => channel.creatorId != user.id);
 
         this.logger.debug(uniqueChannels)
         return uniqueChannels as any as ChannelDto[];
@@ -162,11 +170,15 @@ export class ChannelsService {
         await this.channelRepository.messageCount(channelId);
     }
 
-    async subscribe(channelId: string, user: UserDto): Promise<void>{
-        const result = await this.userRepository.addSubscription(user.id, channelId);
-
-        if(result){
+    async subscribe(channelId: string, userId: string): Promise<ChannelDto[]>{
+        const updatedUser = await this.userRepository.addSubscription(userId, channelId);
+        this.logger.debug(`new sub added for user: ${updatedUser.id}`)
+        this.logger.debug(updatedUser)
+        if(updatedUser){
             const channel = await this.channelRepository.subscribe(channelId);
         }
+        return await this.findAllForUser(updatedUser);
     }
+    
+
 }

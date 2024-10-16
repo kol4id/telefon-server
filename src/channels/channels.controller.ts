@@ -1,10 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 
 import { FastifyRequest } from 'fastify';
-import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
-import {HandleMultipart} from 'src/utils/fastify-multipart-toBuffer';
+import { HandleMultipart } from 'src/utils/fastify-multipart-toBuffer';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
 import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelModeratorDto, UpdateChannelModeratorsDto } from 'src/mongo/dto/update-channel.dto';
@@ -29,8 +28,8 @@ export class ChannelsController {
     }
 
     @Get('search')
-    async SearchMany(@Query('subString') subString: string){
-        return await this.channelsService.searchMany(subString)
+    async SearchMany(@Query('subString') subString: string, @Req() req){
+        return await this.channelsService.searchMany(subString, req.user)
     }
 
     @Post()
@@ -86,13 +85,13 @@ export class ChannelsController {
 
     @Put('subscribe')
     async Subscribe(
-        @Query('channelId') channelId: string,
+        @Body('channelId') channelId: string,
         @Req() req
-    ){
+    ): Promise<ChannelDto[]>{
         if (!channelId) {
             throw new BadRequestException('channelId should not be empty');
         }
 
-        await this.channelsService.subscribe(channelId, req.user);
+        return await this.channelsService.subscribe(channelId, req.user);
     }
 }
