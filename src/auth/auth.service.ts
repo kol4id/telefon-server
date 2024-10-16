@@ -30,11 +30,15 @@ export class AuthService {
         const hashedPassword: string = await bcrypt.hash(signupData.password, await salt);
         
         const newUser: SignupUserDto = {...signupData, password: hashedPassword};
-        const user: UserDto = await this.userRepository.create(newUser);
-
+        const user = await this.userRepository.create(newUser);
         //NOTE(@kol4id): creating new channel for new user
         //so user and channel logic separeted
-        this.channelRepository.createEmpty(user.id);
+        const channel = await this.channelRepository.createEmpty(user.id);
+        const updatedUser: UserDto = {
+            ...user,
+            personalChannel: channel.id
+        }
+        await this.userRepository.update(updatedUser);
 
         const tokens = await this.tokenService.GetTokensAsync(String(user.id))
 
@@ -50,7 +54,6 @@ export class AuthService {
         if (!isPasswordMatch){
             throw new UnauthorizedException("invalid email or password");
         }
-
         const tokens = await this.tokenService.GetTokensAsync(String(user.id))
         this.setCookie(response, tokens);
 
@@ -59,11 +62,18 @@ export class AuthService {
     }
 
     async refreshUser(userData: UserDto, response: FastifyReply): Promise<UserDto>{    
-        this.logger.debug('refreshUser')    
+        this.logger.debug('refreshUser')
         const tokens = await this.tokenService.GetTokensAsync(userData.id)
-        
         this.setCookie(response, tokens);
+        this.logger.debug(userData)
+        return userData;
+    }
 
+    async logoutUser(userData: UserDto, response: FastifyReply): Promise<UserDto>{
+        this.setCookie(response, {
+            access: 'cleared',
+            refresh: 'cleared',
+        })
         return userData;
     }
 

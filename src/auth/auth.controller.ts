@@ -28,6 +28,14 @@ export class AuthController {
     
         return await this.authService.loginUser(loginData, response);
     }
+
+    @Get('/logout')
+    async logoutUsers(
+        @Req() res,
+        @Res({ passthrough: true }) response: FastifyReply,
+    ): Promise<any>{
+        return await this.authService.logoutUser(res.user, response);
+    }
     
     @Get('/refresh')
     @UseGuards(CookieRefreshGuard)
@@ -35,7 +43,6 @@ export class AuthController {
         @Req() res,
         @Res({ passthrough: true }) response: FastifyReply,
     ): Promise<UserDto>{
- 
         return await this.authService.refreshUser(res.user, response);
     }
 }
