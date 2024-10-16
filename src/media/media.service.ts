@@ -22,5 +22,4 @@ export class MediaService {
         const compressed = await this.compress.CompressImageFromBuffer(img)
         return this.mediaRepository.UploadImageByFile(compressed, hash);
     }
-
 }
