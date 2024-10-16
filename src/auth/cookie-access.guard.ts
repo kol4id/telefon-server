@@ -2,12 +2,11 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { UserRepository } from "src/mongo/mongo-user.service";
 import { TokenService } from "src/token/token.service";
 
-
 @Injectable()
 export class CookieAccessGuard implements CanActivate{
     constructor(
         private tokenService: TokenService,
-        private mongoUserService: UserRepository,
+        private userRepository: UserRepository,
     ){}
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -25,7 +24,7 @@ export class CookieAccessGuard implements CanActivate{
         }
 
         const data = await this.tokenService.VerifyTokenAsync(unsignCookie.value, 'access');
-        const user = await this.mongoUserService.findById(data.id);
+        const user = await this.userRepository.findById(data.id);
 
         if (!user){
             throw new UnauthorizedException('AccessToken: There is no such user') 

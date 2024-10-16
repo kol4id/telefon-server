@@ -7,13 +7,19 @@ import { Document } from "mongoose"
 })
 export class Message extends Document{
     @Prop()
-    channelId: string;
+    chatId: string;
 
     @Prop()
     creatorId: string;
 
     @Prop()
     content: string;
+
+    @Prop()
+    isRead: string;
+
+    @Prop()
+    readTime: Date;
 
     @Prop()
     edited: boolean;
@@ -23,7 +29,7 @@ export class Message extends Document{
 
     @Prop()
     @Optional()
-    mediaLenght: boolean;
+    mediaLenght: number;
 
     @Prop()
     @Optional()

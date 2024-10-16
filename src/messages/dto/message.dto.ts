@@ -6,13 +6,19 @@ export class MessageDto{
     readonly id: string;
 
     @IsString()
-    readonly channelId: string;
+    chatId: string;
 
     @IsString()
     readonly creatorId: string;
 
     @IsString()
     readonly content: string;
+
+    @IsBoolean()
+    isRead: string;
+
+    @IsDate()
+    readTime: Date;
 
     @IsBoolean()
     readonly edited: boolean;
@@ -22,6 +28,9 @@ export class MessageDto{
 
     @IsBoolean()
     readonly hasMedia: boolean;
+
+    @IsNumber()
+    mediaLenght: number;
 
     @IsOptional()
     readonly mediaUrls: string[];

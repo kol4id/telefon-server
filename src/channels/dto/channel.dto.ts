@@ -1,30 +1,44 @@
 import { Optional } from "@nestjs/common";
-import { IsDate, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from "class-validator";
+
+type IChannelType = | 'user' | 'group' | 'channel';
 
 
 export class ChannelDto{
     @IsString()
-    readonly id: string;
+    readonly id?: string;
 
     @IsString()
-    readonly title: string;
+    readonly channelName?: string;
+
+    @IsString()
+    readonly title?: string;
 
     @Optional()
-    readonly imgUrl: string;
+    readonly imgUrl?: string;
 
     @IsNumber()
-    readonly subscribers: number;
+    readonly subscribers?: number;
 
     @IsOptional()
-    readonly moderatorsId: string[];
+    readonly moderatorsId?: string[];
 
     @IsOptional()
-    readonly lastMessageId: string;
+    readonly lastMessage?: Date;
 
     @IsDate()
-    readonly updatedAt: Date;
+    readonly updatedAt?: Date;
 
     @IsString()
-    readonly creatorId: string;
+    readonly creatorId?: string;
 
+    @IsString()
+    readonly channelType?: IChannelType;
+
+    @IsBoolean()
+    readonly isPrivate?: boolean;
+
+    @IsString()
+    @IsOptional()
+    readonly description?: string;
 }

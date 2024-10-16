@@ -1,0 +1,59 @@
+User: 
+    - id: string
+    - email: string
+    - firstName: string
+    - lastName: string
+    - userName: string
+    - photoUrl: string  //change to imgUrl
+    - subscriptions: string[]
+    - lastReads: Map<string, Date>
+    - lastLogin: Date
+
+Channel:
+    - id: string
+    - channelName: string
+    - title: string
+    - imgUrl: string
+    - subscribers: number
+    - moderatorsId: string[]
+    - creatorId: string
+    - channelType: string // chat | group
+    - isPrivate: boolean
+    - description: string
+
+Message:
+    - id: string
+    - channelId: string
+    - creatorId: string
+    - chatId: string
+    - content: string
+    - isRead: string //boolean
+    - readTime: Date
+    - edited: boolean
+    - createdAt: Date
+    - hasMedia: boolean
+    - mediaLenght: number //спорное свойство
+    - mediaUrls: string[]
+
+Chat:
+    - id: string
+    - owner: string
+    - totalMessages: number
+    - updatedAt: Date
+    - participants: string[]
+    - lastMessage: string
+
+LookUp:
+    - id: string
+    - user: string
+    - table: Map<string, string>
+
+    ---------------------
+    - id: string
+    - user: string
+    - subs: Map<string, string>
+User -> User
+lookup Table !
+
+
+

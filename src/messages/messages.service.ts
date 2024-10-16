@@ -1,64 +1,71 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { MessageDto } from './dto/message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { MessageRepository } from 'src/mongo/mongo-message.service';
-import { CreateMessageDto } from './dto/create-message.dto';
-import { UserDto } from 'src/mongo/dto/user.dto';
+import { CreateMessageChatDto } from './dto/create-message.dto';
+import { UserDto } from 'src/user/dto/user.dto';
 import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
-import { RealtimeGateway } from 'src/realtime/realtime.gateway';
 import { DeleteMessagesDto } from './dto/delete-message.dto';
 import { ChannelsService } from 'src/channels/channels.service';
+import { ChatRepository } from 'src/mongo/mongo-chat.service';
+import { ChannelDto } from 'src/channels/dto/channel.dto';
 
 @Injectable()
 export class MessagesService {
     constructor(
         private channelsService: ChannelsService,
-        private mongoMessageService: MessageRepository,
-        private realtimeService: RealtimeGateway
+        private messageRepository: MessageRepository,
+        private chatRepository: ChatRepository,
+        // private realtimeService: RealtimeGateway
     ){}
 
+    private logger = new Logger(MessagesService.name)
+    
     async getMessages(params: GetMessagesDto): Promise<MessageDto[]>{
-        const limit: number = 50;
-        const messages = await this.mongoMessageService.findManyByChannel(params.channelId, 
-                                                                parseInt(params.chunkNumber), 
-                                                                limit,
-                                                                'desc');
-
-        return messages
+        return await this.messageRepository.findManyByDate(params.chatId, params.limit, params.startDate, params.endDate);
     }
 
-    async getLastMessages(user: UserDto, chunk: number, limit: number): Promise<MessageDto[][]>{
-        // const CHUNK = 1;
-        // const LIMIT = 50;
-        const messages = await Promise.all(
-            user.subscriptions.map(async(subscription) => {
-                return await this.mongoMessageService
-                                                .findManyByChannel( subscription, 
-                                                                    chunk, 
-                                                                    limit,
-                                                                    'desc')
+    async getLastReadMessages(user: UserDto, limit: number): Promise<MessageDto[][]>{
+        const chats = await this.chatRepository.findByParticipant(user.id);
+        const messages: MessageDto[][] = await Promise.all(
+            chats.map(async(chat)=>{
+                const messagesHigh = await this.messageRepository.findManyByDate(chat.id, limit, undefined , user.lastReads?.[chat.id]);
+                // const messagesLow = await this.messageRepository.findManyByDate(subscription, halfLimit, user.lastReads[subscription], undefined);
+                return messagesHigh;
             })
         )
-
-        // console.log(messages);
         return messages;
     }
+
+    async getLastMessages(user: UserDto): Promise<MessageDto[][]>{  
+        const chats = await this.chatRepository.findByParticipant(user.id);
+        const messages = await Promise.all(
+            chats.map(async(chat) => {
+                const searchParams: GetMessagesDto = {
+                    chatId: chat.id,
+                    limit: 1
+                }
+                return await this.getMessages(searchParams)
+            })
+        )
+        return messages;
+    }
+
+    // async getMessagesByDate(params: GetMessagesByDateDto): Promise<MessageDto[]>{
+    //     const sortFilter = params.searchSide === 'earlier' ? 'lt' : "gt"
+    //     const messages = await this.messageRepository.findManyByDate(params.channelId, params.searchDate, parseInt(params.limit), sortFilter)
+    //     return messages;
+    // }
     
-    async create(message: CreateMessageDto, user: UserDto): Promise<MessageDto | string>{
-
-        const newMessage = await this.mongoMessageService.create(message, user.id);
-        if (newMessage.hasMedia){
-            return newMessage.id;
-        }
-
-        this.realtimeService.sendToRoom(newMessage.channelId, {eventType: 'onMessageCreate', data: newMessage});
-        this.channelsService.updateLastMessage({id: message.channelId, lastMessageId: newMessage.id}, user)
-        await this.channelsService.UpdateTotalMessages(message.channelId);        
+    async create(message: CreateMessageChatDto, user: UserDto): Promise<MessageDto>{
+        const newMessage = await this.messageRepository.create(message, user.id);
+        this.chatRepository.updateLastMessage(newMessage.chatId, newMessage.id);
+        this.chatRepository.incTotalMessages(message.chatId);
         return newMessage
     }
 
     async createMedia(mediaLinks: string[], messageId: string, user: UserDto): Promise<MessageDto>{
-        const message: MessageDto = await this.mongoMessageService.findOne(messageId);
+        const message: MessageDto = await this.messageRepository.findOne(messageId);
         if(message.creatorId !== user.id){
             throw new BadRequestException("You don't have such access rights")
         }
@@ -70,12 +77,12 @@ export class MessagesService {
             mediaUrls: mediaLinks
         }
 
-        const newMessageWithMedia = await this.mongoMessageService.update(createMedia);
+        const newMessageWithMedia = await this.messageRepository.update(createMedia);
         return newMessageWithMedia;
     }
 
     async update(messageData: UpdateMessageContentDto, user: UserDto): Promise<MessageDto>{
-        const message: MessageDto = await this.mongoMessageService.findOne(messageData.id);
+        const message: MessageDto = await this.messageRepository.findOne(messageData.id);
         if(message.creatorId !== user.id){
             throw new BadRequestException("You don't have such access rights")
         }
@@ -86,15 +93,29 @@ export class MessagesService {
             edited: true,
         }
 
-        const updatedMessage = await this.mongoMessageService.update(updateData);
+        const updatedMessage = await this.messageRepository.update(updateData);
         return updatedMessage;
     }
 
-    async delete(messageData: DeleteMessagesDto, user: UserDto): Promise<void>{
-        if (!user.subscriptions.find((sub) => sub === messageData.channelId)){
-            throw new BadRequestException("You don't have such access rights")
+    async delete(messageData: DeleteMessagesDto, user: UserDto): Promise<boolean>{
+        const chat = await this.chatRepository.findById(messageData.chatId);
+        // if (!chat.owner.includes(user.personalChannel)){
+        // }
+        let channel: ChannelDto;
+        if (chat.owner.length == 1){
+            channel = await this.channelsService.get(chat.owner[0]);
         }
 
-        return await this.mongoMessageService.delete(messageData.messageId);
+        if (chat.owner.includes(user.personalChannel) || channel.moderatorsId?.includes(user.id)){
+            const isDeleted = await this.messageRepository.delete(messageData.messageId);
+        } else {
+            throw new BadRequestException("You don't have such access rights");
+        }
+        return;
+    }
+
+    async markMessagesAsRead(messages: MessageDto[]): Promise<MessageDto[]>{
+        const updatedMessages = await this.messageRepository.updateReadMany(messages)
+        return updatedMessages
     }
 }

@@ -10,7 +10,7 @@ import { TokenModule } from 'src/token/token.module';
 @Module({
   imports: [
     TokenModule,
-    MongoModule,
+    MongoModule
   ],
   controllers: [AuthController],
   providers: [AuthService, CookieRefreshGuard, CookieAccessGuard],

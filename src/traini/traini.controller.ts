@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CreateChannelDto } from 'src/channels/dto/create-channel.dto';
-import { MongoChannelService } from 'src/mongo/mongo-channel.service';
-import { MongoUserService } from 'src/mongo/mongo-user.service';
+import { ChannelRepository } from 'src/mongo/mongo-channel.service';
+import { UserRepository } from 'src/mongo/mongo-user.service';
 
 @Controller('traini')
 export class TrainiController {
     constructor(
-        private mongoUserService: MongoUserService,
-        private mongoChannelService: MongoChannelService,
+        private mongoUserService: UserRepository,
+        private mongoChannelService: ChannelRepository,
     ){}
 
     @Get()
