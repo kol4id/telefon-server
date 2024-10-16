@@ -7,7 +7,7 @@ import { Document } from "mongoose"
 })
 export class Message extends Document{
     @Prop()
-    channelId: string;
+    chatId: string;
 
     @Prop()
     creatorId: string;

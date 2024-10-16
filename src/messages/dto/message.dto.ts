@@ -6,7 +6,7 @@ export class MessageDto{
     readonly id: string;
 
     @IsString()
-    readonly channelId: string;
+    chatId: string;
 
     @IsString()
     readonly creatorId: string;

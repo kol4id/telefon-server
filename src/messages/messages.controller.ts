@@ -1,12 +1,10 @@
-import { BadRequestException, Body, Controller, Delete, Get, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Controller, Delete, Get, ParseIntPipe, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { MessageDto } from './dto/message.dto';
 import { GetMessagesDto } from './dto/get-messages.dto';
 import { MessagesService } from './messages.service';
 import { CookieAccessGuard } from 'src/auth/cookie-access.guard';
-import { CreateMessageDto } from './dto/create-message.dto';
 import { FastifyRequest } from 'fastify';
 import { HandleMultipartArray } from 'src/utils/fastify-multipart-toBuffer';
-import { CloudinaryService } from 'src/cloudinary/сloudinary.service';
 import { MediaService } from 'src/media/media.service';
 // import { DeleteMessagesDto } from './dto/delete-message.dto';
 
@@ -53,13 +51,13 @@ export class MessagesController {
     //When transmitting a message with a media, it is mandatory to set the hasMedia = true flag
     //passing such a message, we get the messageId in the response, which we pass to @Put('create')
     //and attaching all the files that came with the message
-    @Post('create') 
-    async CreateMessage(
-        @Body() message: CreateMessageDto,
-        @Req() req
-    ): Promise<MessageDto | string>{
-        return await this.messageService.create(message, req.user);
-    }
+    // @Post('create') 
+    // async CreateMessage(
+    //     @Body() message: CreateMessageDto,
+    //     @Req() req
+    // ): Promise<MessageDto | string>{
+    //     return await this.messageService.create(message, req.user);
+    // }
 
     @Put('create')
     async Media(
@@ -95,11 +93,11 @@ export class MessagesController {
     @Delete('delete')
     async DeleteMessage(
         @Query('messageId') messageId: string,
-        @Query('channelId') channelId: string,
+        @Query('channelId') chatId: string,
         @Req() req
     ): Promise<void>{
 
-        const messageData = {messageId, channelId};
+        const messageData = {messageId, chatId};
         await this.messageService.delete(messageData, req.user);
     }
 

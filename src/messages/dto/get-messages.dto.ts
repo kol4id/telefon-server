@@ -5,7 +5,7 @@ import { IsDate, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class GetMessagesDto{
     @IsString()
-    readonly channelId: string;
+    readonly chatId: string;
 
     @Type(() => Date)
     @IsDate()

@@ -5,5 +5,5 @@ export class DeleteMessagesDto{
     readonly messageId: string;
 
     @IsString()
-    readonly channelId: string;
+    readonly chatId: string;
 }
