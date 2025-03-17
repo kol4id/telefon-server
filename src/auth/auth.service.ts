@@ -33,7 +33,7 @@ export class AuthService {
         const user = await this.userRepository.create(newUser);
         //NOTE(@kol4id): creating new channel for new user
         //so user and channel logic separeted
-        const channel = await this.channelRepository.createEmpty(user.id);
+        const channel = await this.channelRepository.createEmptyUser(user.id);
         const updatedUser: UserDto = {
             ...user,
             personalChannel: channel.id

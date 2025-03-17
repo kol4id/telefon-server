@@ -4,33 +4,37 @@ import { GetMessagesDto } from './dto/get-messages.dto';
 import { MessageRepository } from 'src/mongo/mongo-message.service';
 import { CreateMessageChatDto } from './dto/create-message.dto';
 import { UserDto } from 'src/user/dto/user.dto';
-import { UpdateMediaDto, UpdateMessageContentDto } from 'src/mongo/dto/update-message.dto';
-import { DeleteMessagesDto } from './dto/delete-message.dto';
+import { UnreadMessagesDto, UpdateMediaDto, UpdateMessageContentDto } from './dto/message-utls.dto';
 import { ChannelsService } from 'src/channels/channels.service';
 import { ChatRepository } from 'src/mongo/mongo-chat.service';
-import { ChannelDto } from 'src/channels/dto/channel.dto';
+import { ChatDto } from 'src/chats/dto/chat.dto';
 
 @Injectable()
 export class MessagesService {
     constructor(
         private channelsService: ChannelsService,
-        private messageRepository: MessageRepository,
+        private messageRepository: MessageRepository,   
         private chatRepository: ChatRepository,
         // private realtimeService: RealtimeGateway
     ){}
 
     private logger = new Logger(MessagesService.name)
     
+
+    async getMessage(id: string): Promise<MessageDto>{
+        return this.messageRepository.findOne(id);
+    }
+
     async getMessages(params: GetMessagesDto): Promise<MessageDto[]>{
         return await this.messageRepository.findManyByDate(params.chatId, params.limit, params.startDate, params.endDate);
     }
 
     async getLastReadMessages(user: UserDto, limit: number): Promise<MessageDto[][]>{
         const chats = await this.chatRepository.findByParticipant(user.id);
+        this.logger.debug(chats);
         const messages: MessageDto[][] = await Promise.all(
             chats.map(async(chat)=>{
                 const messagesHigh = await this.messageRepository.findManyByDate(chat.id, limit, undefined , user.lastReads?.[chat.id]);
-                // const messagesLow = await this.messageRepository.findManyByDate(subscription, halfLimit, user.lastReads[subscription], undefined);
                 return messagesHigh;
             })
         )
@@ -51,11 +55,20 @@ export class MessagesService {
         return messages;
     }
 
-    // async getMessagesByDate(params: GetMessagesByDateDto): Promise<MessageDto[]>{
-    //     const sortFilter = params.searchSide === 'earlier' ? 'lt' : "gt"
-    //     const messages = await this.messageRepository.findManyByDate(params.channelId, params.searchDate, parseInt(params.limit), sortFilter)
-    //     return messages;
-    // }
+    async getUnreadMessagesCount(user: UserDto): Promise<UnreadMessagesDto[]>{
+        const chats = await this.chatRepository.findByParticipant(user.id);
+        const channelChatMap = this.mapChannelToChat(chats, user.subscriptions);
+        const matchConditions = user.subscriptions.map(channelId => {
+            const chat = channelChatMap.get(channelId);
+            return (
+                {
+                    chatId: chat,
+                    createdAt: user.lastReads[chat]
+                }    
+            )
+        });
+        return this.messageRepository.findUnreadMessagesForChannels(matchConditions, user);
+    }
     
     async create(message: CreateMessageChatDto, user: UserDto): Promise<MessageDto>{
         const newMessage = await this.messageRepository.create(message, user.id);
@@ -97,25 +110,47 @@ export class MessagesService {
         return updatedMessage;
     }
 
-    async delete(messageData: DeleteMessagesDto, user: UserDto): Promise<boolean>{
-        const chat = await this.chatRepository.findById(messageData.chatId);
-        // if (!chat.owner.includes(user.personalChannel)){
-        // }
-        let channel: ChannelDto;
-        if (chat.owner.length == 1){
-            channel = await this.channelsService.get(chat.owner[0]);
-        }
+    async delete(messageId: string, user: UserDto): Promise<MessageDto | boolean>{
+        const message = await this.messageRepository.findOne(messageId);
+        const chat = await this.chatRepository.findById(message.chatId);
+        
+        //if initiator is creator of the message => delete (dm / chat / channel);
+        //if initiator is reciver => delete (dm only)
+        if (chat.owner.includes(user.personalChannel) || message.creatorId == user.id){
+            return this.messageRepository.delete(message.id);
+        } 
 
-        if (chat.owner.includes(user.personalChannel) || channel.moderatorsId?.includes(user.id)){
-            const isDeleted = await this.messageRepository.delete(messageData.messageId);
-        } else {
-            throw new BadRequestException("You don't have such access rights");
-        }
-        return;
+        if (chat.owner.length == 2) return false;
+
+        const channel = await this.channelsService.get(chat.owner[0]);
+        if (!channel.moderatorsId.includes(user.id)) return false;
+
+        return await this.messageRepository.delete(message.id);
+    }
+
+    async deleteManyByChat(chatId: string){
+        await this.messageRepository.deleteByChat(chatId);
     }
 
     async markMessagesAsRead(messages: MessageDto[]): Promise<MessageDto[]>{
         const updatedMessages = await this.messageRepository.updateReadMany(messages)
         return updatedMessages
     }
+
+    private mapChannelToChat(chats: ChatDto[], subscriptions: string[]) {
+        const channelToChatMap = new Map<string, string>();
+        const subscribedSet = new Set(subscriptions); // Преобразуем массив подписок в Set для более быстрой проверки
+    
+        chats.forEach((chat) => {
+            chat.owner.forEach(ownerId => {
+                if (subscribedSet.has(ownerId)) {
+                    channelToChatMap.set(ownerId, chat.id); // Если владелец есть в подписках, добавляем его
+                }
+            });
+        });
+    
+        return channelToChatMap;
+    }
+
+
 }

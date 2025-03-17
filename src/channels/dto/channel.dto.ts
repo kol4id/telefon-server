@@ -1,7 +1,7 @@
 import { Optional } from "@nestjs/common";
 import { IsBoolean, IsDate, IsNumber, IsOptional, IsString } from "class-validator";
 
-type IChannelType = | 'user' | 'group' | 'channel';
+export type IChannelType = | 'user' | 'group' | 'channel';
 
 
 export class ChannelDto{

@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, OmitType } from "@nestjs/swagger";
 import { IsArray, IsEmail, IsOptional, IsString } from "class-validator";
 import { Date } from "mongoose";
 import { ChannelDto } from "src/channels/dto/channel.dto";
@@ -63,7 +63,9 @@ export class UserDto{
     @ApiProperty({type: 'string', example: ['65831453ec90aea7e5b457e9']})
     @IsOptional()
     readonly personalChannel: string;
-}
+};
+
+export class UserExternalDto extends OmitType(UserDto, ['email', 'subscriptions', 'lastReads', 'favorite', 'blacklist'] as const){}
 
 
 export function transformUserToChannel(user: UserDto): ChannelDto {

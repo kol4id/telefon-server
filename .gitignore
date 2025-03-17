@@ -5,6 +5,10 @@
 # env
 .env
 
+#docker
+docker-composecopy.yml
+# docker-compose.yml
+
 # Logs
 logs
 *.log

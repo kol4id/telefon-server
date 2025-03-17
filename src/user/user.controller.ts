@@ -24,6 +24,16 @@ export class UserController {
         return await this.userService.getUser(userId);
     }
 
+    @Get('all')
+    async getAllUser(@Req() req): Promise<UserDto[]>{
+        return await this.userService.getManyUsersByUserSubs(req.user);
+    }
+
+    @Get('many')
+    async getMany(@Query('users') users: string, @Req() req){
+        return await this.userService.getMany(JSON.parse(users));
+    }
+
     @Get('self')
     async Self(@Req() req): Promise<UserDto>{
         return req.user;

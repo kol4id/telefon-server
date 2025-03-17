@@ -3,10 +3,10 @@ import { Message } from "./shemas/message.schema";
 import { FilterQuery, Model, SortOrder } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
 import { MessageDto } from "src/messages/dto/message.dto";
-import { CreateMessageChatDto } from "src/messages/dto/create-message.dto";
-import { UpdateMediaDto, UpdateMessageContentDto } from "./dto/update-message.dto";
+import { CreateMessageChatDto, UnreadMessagesDto } from "src/messages/dto/message-utls.dto";
+import { UpdateMediaDto, UpdateMessageContentDto } from "src/messages/dto/message-utls.dto";
 import idProjection from "./mongo-projection-id-config";
-
+import { UserDto } from "src/user/dto/user.dto";
 
 const messageProjection = {
     ...idProjection,
@@ -92,6 +92,29 @@ export class MessageRepository{
         return messages as any as MessageDto[];
     }
 
+    async findUnreadMessagesForChannels(query: FilterQuery<{chatId: string, createdAt: any}>[], user: UserDto): Promise<UnreadMessagesDto[]>{
+        const unreadCount = this.messageModel.aggregate([
+            {$match: {
+                $or: query.map(q => ({
+                    chatId: q.chatId,
+                    createdAt: { $gt: new Date(q.createdAt) },
+                    creatorId: {$ne: user.id}
+                }))
+            }},
+            {$group: {
+                _id: `$chatId`,
+                unreadCount: {$sum: 1}
+            }}, 
+            {$project: {
+                _id: 0,
+                chatId: `$_id`,
+                unreadCount: 1
+            }}
+        ]).exec();
+
+        return unreadCount;
+    }
+
     async create(message: CreateMessageChatDto, userId: string): Promise<MessageDto>{
         const newMessage = {
             ...message,
@@ -122,9 +145,14 @@ export class MessageRepository{
         return updatedMessages as any as MessageDto[];
     }
     
-    async delete(messageId: string): Promise<boolean>{
-        const deleted = await this.messageModel.findByIdAndDelete(messageId).exec();
-        return deleted ? true : false
+    async delete(messageId: string): Promise<MessageDto>{
+        const deleted = await this.messageModel.findByIdAndDelete(messageId, defaultOptions);
+        return deleted as any as MessageDto;
+    }
+
+    async deleteByChat(chatId: string): Promise<boolean>{
+        const deleted = await this.messageModel.deleteMany({chatId: chatId}, defaultOptions);
+        return deleted.acknowledged;
     }
 
     private StringifyId(message: any){

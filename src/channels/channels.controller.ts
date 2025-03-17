@@ -27,6 +27,11 @@ export class ChannelsController {
         return await this.channelsService.get(params.id);
     }
 
+    @Get('participants')
+    async getParticipants(@Query('channelId') channelId,  @Req() req){
+        return await this.channelsService.getParticipants(channelId, req.user);
+    }
+
     @Get('search')
     async SearchMany(@Query('subString') subString: string, @Req() req){
         return await this.channelsService.searchMany(subString, req.user)
@@ -49,7 +54,6 @@ export class ChannelsController {
 
         return await this.channelsService.updateGeneral(channel, req.user);        
     }
-
 
     @Put('moderator/add')
     async AddModerator(

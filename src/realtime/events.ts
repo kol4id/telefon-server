@@ -7,21 +7,34 @@ export interface ServerToClientEvents {
     personalMessage: (payload: string) => void;
     messagesRead: (payload: MessageDto) => void;
     messageCreate: (payload: {message: MessageDto, chat: ChatDto}) => void;
+    messageDelete: (payload: boolean) => void;
     updateUser: (payload: UserDto) => void;
-    channelSubscribe: (payload: ChannelDto) => void;
+    channelSubscribe: (payload: {channel: ChannelDto, chat: ChatDto}) => void;
+    channelLeave: (payload: {channel: ChannelDto, chat: ChatDto}) => void;
+    userOnlineStatus: (payload: {channelId: string, status: boolean}) => void;
+    subsOnlineStatus: (payload: {channelId: string, status: boolean}[]) => void;
 }
 
 export interface ClientToServerEvents {
     personalMessage: (payload: string) => void;
     messagesRead: (payload: MessageDto) => void;
+    messageDelete: (payload: string) => void;
+    userOnlineStatus: (payload: boolean) => void;
 }
 
 export type ServerToClientMessageType = 
     | 'messageCreate'
     | 'messagesRead'
+    | 'messageDelete'
     | 'personalMessage'
-    | 'updateUser';
+    | 'updateUser'
+    | 'channelSubscribe'
+    | 'channelLeave'
+    | 'userOnlineStatus'
+    | 'subsOnlineStatus';
 
 export type ClientToServerMessageType = 
     | 'messagesRead'
-    | 'personalMessage';
+    | 'messageDelete'
+    | 'personalMessage'
+    | 'userOnlineStatus';

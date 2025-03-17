@@ -8,6 +8,8 @@ import { MessagesModule } from 'src/messages/messages.module';
 import { UserModule } from 'src/user/user.module';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { MediaModule } from 'src/media/media.module';
+import { RedisModule } from 'src/redis/redis.module';
+import { ChatsModule } from 'src/chats/chats.module';
 
 @Module({
   imports: [
@@ -17,7 +19,9 @@ import { MediaModule } from 'src/media/media.module';
     ChannelsModule,
     MessagesModule,
     UserModule,
-    MediaModule
+    MediaModule,
+    RedisModule,
+    ChatsModule
   ],
   providers: [RealtimeGateway, RealtimeService],
   exports: [RealtimeGateway],

@@ -16,7 +16,7 @@ export class Message extends Document{
     content: string;
 
     @Prop()
-    isRead: string;
+    isRead: boolean;
 
     @Prop()
     readTime: Date;

@@ -1,7 +1,8 @@
-import { INestApplicationContext} from "@nestjs/common";
+import { INestApplicationContext, UnauthorizedException} from "@nestjs/common";
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { Server, ServerOptions, Socket } from "socket.io";
 import { TokenService } from "src/token/token.service";
+import { UserService } from "src/user/user.service";
 
 export type SocketWithAuth = Socket & {userId: string};
 
@@ -25,23 +26,29 @@ export class SocketIOAdapter extends IoAdapter{
         };
 
         const tokenService = this.app.get(TokenService);
+        const userService = this.app.get(UserService);
 
         const server: Server =  super.createIOServer(port, optionsWithCors)
-        server.use(this.createTokenMiddleware(tokenService))
+        server.use(this.createTokenMiddleware(tokenService, userService))
         return server
     }    
 
     createTokenMiddleware = 
-        (tokenService: TokenService) =>
+        (tokenService: TokenService, userService: UserService) =>
             async (socket: SocketWithAuth, next) =>{
                 try {
                     const headers = socket.handshake.headers;
                     let accessToken: string = '';
 
                     if (headers.cookie){
-                        const tokenSigned = headers.cookie.split("=")[1].split(";")[0];
+                        const cookies = headers.cookie.split(';').reduce((acc: Record<string, string>, cookie) => {
+                            const [name, value] = cookie.trim().split('=');
+                            acc[name] = value;
+                            return acc;
+                        }, {});
+
+                        const tokenSigned = cookies['accessToken'];
                         const lastDotIndex = tokenSigned.lastIndexOf('.');
-                        // Извлекаем подстроку до последней точки
                         accessToken = tokenSigned.substring(tokenSigned.lastIndexOf('=', lastDotIndex - 1) + 1, lastDotIndex);        
                     } else {
                         if(headers.authorization.startsWith("Bearer ")){
@@ -54,7 +61,13 @@ export class SocketIOAdapter extends IoAdapter{
                     }
 
                     const data = await tokenService.VerifyTokenAsync(accessToken, 'access');
-                    socket.userId = String(data.id)                    
+                    const user = await userService.getUser((String(data.id)));
+                    
+                    if (!user){
+                        throw new UnauthorizedException('AccessToken: There is no such user') 
+                    }
+
+                    socket.userId = data.id;
                     next();
                 } catch (error) {
                     next(new Error('Unauthorized, '))

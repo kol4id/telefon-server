@@ -10,6 +10,7 @@ import { MongoModule } from 'src/mongo/mongo.module';
     MongoModule
   ],
   controllers: [ChatsController],
-  providers: [ChatsService]
+  providers: [ChatsService],
+  exports: [ChatsService]
 })
 export class ChatsModule {}

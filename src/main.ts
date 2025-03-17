@@ -1,19 +1,23 @@
 import { NestFactory } from '@nestjs/core';
-import { Get, ValidationPipe } from '@nestjs/common'
+import { ValidationPipe } from '@nestjs/common';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
-import fastifyCookie = require('@fastify/cookie');
-import * as fastifyMulter from '@fastify/multipart'
+import * as fastifyMulter from '@fastify/multipart';
 import { SocketIOAdapter } from './realtime/socket-io-adapter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { METHODS } from 'http';
-import pino from 'pino';
-import pinoPretty from 'pino-pretty';
 import { Logger } from './logger/logger.service';
-
+import fastifyCookie = require('@fastify/cookie');
+import * as fs from 'fs';
 
 
 async function bootstrap() {
+  // const httpsOptions = {
+    
+  // };
+
+  // key: fs.readFileSync('/etc/letsencrypt/live/server-telefon.duckdns.org/privkey.pem'),
+  // cert: fs.readFileSync('/etc/letsencrypt/live/server-telefon.duckdns.org/fullchain.pem'),
+  // { https: httpsOptions }
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
     bufferLogs: true,
   });
@@ -31,7 +35,10 @@ async function bootstrap() {
   app.enableCors({
     preflightContinue: true,
     credentials: true,
-    origin: '*',
+    origin: (origin, callback) => {
+      // Разрешаем любой источник
+      callback(null, origin || '*');
+    },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   });
 

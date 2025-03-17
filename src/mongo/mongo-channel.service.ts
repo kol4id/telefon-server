@@ -4,7 +4,7 @@ import { Channel } from "./shemas/channel.schema";
 import { Model } from "mongoose";
 import { ChannelDto } from "../channels/dto/channel.dto";
 import { UpdateChannelImgDto, UpdateChannelDto, UpdateChannelLastMessageDto, UpdateChannelModeratorsDto } from "./dto/update-channel.dto";
-import { CreateChannelDto } from "src/channels/dto/create-channel.dto";
+import { CreateChannelDto, CreateChannelGroupDto } from "src/channels/dto/create-channel.dto";
 import idProjection from "./mongo-projection-id-config";
 
 const channelProjection = {
@@ -81,8 +81,8 @@ export class ChannelRepository {
         return(channel as any as ChannelDto);
     }
 
-    async createEmpty(userId: string): Promise<ChannelDto>{
-        const DEFAULT_BLANK_PHOTO_URL = "https://res.cloudinary.com/dz57wrthe/image/upload/v1727736783/blank.jpg";
+    async createEmptyUser(userId: string): Promise<ChannelDto>{
+        const DEFAULT_BLANK_PHOTO_URL = "https://res.cloudinary.com/dz57wrthe/image/upload/v1730298719/blank.jpg";
         const channel = await this.channelModel.create({
             creatorId: userId,
             channelType: 'user',
@@ -93,6 +93,24 @@ export class ChannelRepository {
         });
         return channel as any as ChannelDto;
     }
+
+    async createEmptyChannel(channelData: ChannelDto, userId: string): Promise<ChannelDto>{
+        const DEFAULT_BLANK_PHOTO_URL = "https://res.cloudinary.com/dz57wrthe/image/upload/v1730667399/channelBlank.webp";
+        const channel = await this.channelModel.create({
+            creatorId: userId,
+            channelType: channelData.channelType,
+            isPrivate: false,
+            subscribers: 0,
+            moderatorsId: [],
+            imgUrl: channelData.imgUrl ?? DEFAULT_BLANK_PHOTO_URL,
+            title: channelData.title,
+            channelName: channelData.channelName,
+            description: channelData.description
+        })
+
+        const newChannel = this.channelModel.findById(channel._id, channelProjection, defaultOptions)
+        return newChannel as any as ChannelDto
+    }  
 
     async update(channelData: ChannelDto| UpdateChannelDto | UpdateChannelLastMessageDto | UpdateChannelModeratorsDto | UpdateChannelImgDto): Promise<ChannelDto>{
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelData.id, {...channelData}, defaultOptions)
@@ -111,6 +129,11 @@ export class ChannelRepository {
 
     async subscribe(channelId: string): Promise<ChannelDto>{
         const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: 1}}, defaultOptions)
+        return updatedChannel as any as ChannelDto;
+    }
+
+    async reduceSubCount(channelId: string): Promise<ChannelDto>{
+        const updatedChannel = await this.channelModel.findByIdAndUpdate(channelId, {$inc: {subscribers: -1}}, defaultOptions)
         return updatedChannel as any as ChannelDto;
     }
 

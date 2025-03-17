@@ -17,6 +17,7 @@ import { UpdatesModule } from './updates/updates.module';
 import { MediaModule } from './media/media.module';
 import { LoggerModule } from './logger/logger.module';
 import { ChatsModule } from './chats/chats.module';
+import { RedisModule } from './redis/redis.module';
 
 
 @Module({
@@ -27,7 +28,7 @@ import { ChatsModule } from './chats/chats.module';
       envFilePath: '.env',
       isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.DB_LOCAL),
+    MongooseModule.forRoot(process.env.DB_LOCAL), 
     CloudinaryModule,
     CompressModule,
     MongoModule,
@@ -39,9 +40,11 @@ import { ChatsModule } from './chats/chats.module';
     UpdatesModule,
     MediaModule,
     LoggerModule,
-    ChatsModule
+    ChatsModule,
+    RedisModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+// process.env.IS_DOCKER ? process.env.DB_DOCKER : process.env.DB_LOCAL

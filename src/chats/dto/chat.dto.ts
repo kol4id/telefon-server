@@ -1,22 +1,25 @@
-import { IsArray, IsDate, IsNumber, IsString } from "class-validator";
+    import { IsArray, IsBoolean, IsDate, IsNumber, IsString } from "class-validator";
 
-export class ChatDto{
-    @IsString()
-    readonly id?: string;
+    export class ChatDto{
+        @IsString()
+        readonly id?: string;
 
-    @IsString()
-    readonly owner?: string[];
+        @IsString()
+        readonly owner?: string[];
 
-    @IsNumber()
-    readonly totalMessages?: number;
+        @IsNumber()
+        readonly totalMessages?: number;
 
-    @IsDate()
-    readonly updatedAt?: Date;
+        @IsDate()
+        readonly updatedAt?: Date;
 
-    @IsArray()
-    @IsString()
-    readonly participants?: string[];
+        @IsArray()
+        @IsString()
+        readonly participants?: string[];
 
-    @IsString()
-    readonly lastMessage?: string;
-}
+        @IsBoolean()
+        readonly isSubChat?: boolean;
+
+        @IsString()
+        readonly lastMessage?: string;
+    }

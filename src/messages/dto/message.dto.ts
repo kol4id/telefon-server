@@ -15,7 +15,7 @@ export class MessageDto{
     readonly content: string;
 
     @IsBoolean()
-    isRead: string;
+    isRead: boolean;
 
     @IsDate()
     readTime: Date;
@@ -35,3 +35,4 @@ export class MessageDto{
     @IsOptional()
     readonly mediaUrls: string[];
 }
+

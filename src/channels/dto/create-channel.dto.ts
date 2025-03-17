@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IChannelType } from "./channel.dto";
 
 export class CreateChannelDto {
     @ApiProperty({type: 'string', example: 'Telegram'})
@@ -11,4 +12,27 @@ export class CreateChannelDto {
     @IsNotEmpty()
     @IsString()
     readonly creatorId: string;
+}
+
+export class CreateChannelGroupDto{
+    @IsString()
+    readonly title: string;
+
+    @IsString()
+    readonly channelName: string;
+
+    @IsString()
+    @IsOptional()
+    readonly description: string;
+
+    @IsString()
+    readonly channelType: IChannelType;
+
+    @IsOptional()
+    readonly imageBuffer: ArrayBuffer;
+
+    @IsArray()
+    @IsString()
+    @IsOptional()
+    readonly usersToAdd: string[];
 }

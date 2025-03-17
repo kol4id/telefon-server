@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { User } from "./shemas/user.schema";
-import { Model } from "mongoose";
-import { UserDto } from "../user/dto/user.dto";
+import { Model, Types } from "mongoose";
+import { UserDto, UserExternalDto } from "../user/dto/user.dto";
 import { SignupUserDto } from "src/auth/dto/auth.dto";
 import { AuthUserDto } from "src/auth/dto/auth.dto";
 import idProjection from "./mongo-projection-id-config";
@@ -22,6 +22,25 @@ const userProjection = {
     ...idProjection,
 }
 
+const userExternalProjectionId = {
+    ...idProjection,
+    userName: 1,
+    firstName: 1,
+    lastName: 1,
+    photoUrl: 1,
+    lastLogin: 1,
+    personalChannel: 1,
+}
+
+
+const chatProjectionId = {
+    
+    owner: 1,
+    totalMessages: 1,
+    updatedAt: 1,
+    participants: 1,
+    lastMessage: 1,
+}
 const authProjection = {
     ...userProjection,
     password: 1,
@@ -41,11 +60,18 @@ export class UserRepository {
 
     async findById(id: string): Promise<UserDto>{
         const user = await this.userModel.findById(id, userProjection).lean();
-        if(!user){
-            throw new NotFoundException(`There is no such user ${id}`);
-        }
 
         return user as any as UserDto;
+    }
+
+    async findManyById(usersIds: string[]): Promise<UserExternalDto[]>{
+        const users = this.userModel.find({_id: {$in: usersIds}}, userExternalProjectionId, defaultOptions);
+        return users as any as UserExternalDto[];
+    }
+
+    async findManyByChannels(channelsId: string[]): Promise<UserDto[]>{
+        const users = await this.userModel.find({personalChannel: {$in: channelsId}}, userProjection, defaultOptions);
+        return users as any as UserDto[];
     }
 
     async findByIdNoLean(id: string): Promise<UserDto>{
@@ -140,18 +166,33 @@ export class UserRepository {
     }
 
     async addSubscription(userId: string, channelId: string): Promise<UserDto>{
-        const user = await this.userModel.findById(userId).lean().exec();
+        const user = await this.findById(userId);
         if (user.subscriptions.includes(channelId)){
             throw new BadRequestException("already subscribed");           
         }
 
-        const oldsubs = user.subscriptions;
-        user.subscriptions = [...oldsubs, channelId]
+        user.subscriptions.push(channelId);
         const userData = await this.userModel.findByIdAndUpdate(userId, user, {
             ...defaultOptions,
             projection: userProjection,
             new: true
         }).lean().exec()     
+        return userData as any as UserDto
+    }
+
+    async removeSubscription(userId: string, channelId: string): Promise<UserDto>{
+        const user = await this.findById(userId);
+        if (!user.subscriptions.includes(channelId)){
+            throw new BadRequestException("not subed");           
+        }
+
+        const filteredSubs = user.subscriptions.filter(sub => sub != channelId);
+        const newUser: UserDto = {...user, subscriptions: filteredSubs};
+        const userData = await this.userModel.findByIdAndUpdate(userId, newUser, {
+            ...defaultOptions,
+            projection: userProjection,
+            new: true
+        });
         return userData as any as UserDto
     }
 

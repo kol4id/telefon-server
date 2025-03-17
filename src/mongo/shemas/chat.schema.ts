@@ -26,6 +26,10 @@ export class Chat{
 
     @Optional()
     @Prop()
+    isSubChat?: boolean;
+
+    @Optional()
+    @Prop()
     lastMessage?: string;
 }
 

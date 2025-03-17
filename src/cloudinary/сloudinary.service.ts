@@ -17,7 +17,7 @@ export class CloudinaryService {
     //Then sending it by a stream to cloudinary, handling errors
     //geting UploadApiReturn only if image successful sended
     async UploadImageByFile (file: Buffer, hash: string): Promise<string>{
-        const compresedImg = await this.compressService.CompressImageFromBuffer(file);
+        // const compresedImg = await this.compressService.CompressImageFromBuffer(file);
         return new Promise((resolve) => {
             cloudinary.uploader.upload_stream({
                 resource_type: 'auto',
@@ -27,7 +27,7 @@ export class CloudinaryService {
                     throw new ServiceUnavailableException('There some error while uploading your image');
                 }
                 resolve(result.secure_url);
-            }).end(compresedImg)
+            }).end(file)
         })
     }
 
