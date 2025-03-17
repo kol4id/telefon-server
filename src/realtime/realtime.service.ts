@@ -10,7 +10,7 @@ import { ChannelDto } from 'src/channels/dto/channel.dto';
 import { ChatRepository } from 'src/mongo/mongo-chat.service';
 import { UserRepository } from 'src/mongo/mongo-user.service';
 import { ChatDto } from 'src/chats/dto/chat.dto';
-import { RedisService } from 'src/redis/redis.service';
+import { RedisService } from 'src/redis-service/redis.service';
 import { Server, Socket } from 'socket.io';
 import { CreateMessageDto } from 'src/messages/dto/message-utls.dto';
 import { convertFilesToBuffers } from 'src/utils/convertFilesToBuffers';

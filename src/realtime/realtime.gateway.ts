@@ -8,7 +8,7 @@ import { MessageDto } from 'src/messages/dto/message.dto';
 import { RealtimeService } from './realtime.service';
 import { CreateMessageDto } from 'src/messages/dto/create-message.dto';
 import { MessagesService } from 'src/messages/messages.service';
-import { RedisService } from 'src/redis/redis.service';
+import { RedisService } from 'src/redis-service/redis.service';
 import { ChatsService } from 'src/chats/chats.service';
 import { CreateChannelGroupDto } from 'src/channels/dto/create-channel.dto';
 

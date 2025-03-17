@@ -17,7 +17,7 @@ import { UpdatesModule } from './updates/updates.module';
 import { MediaModule } from './media/media.module';
 import { LoggerModule } from './logger/logger.module';
 import { ChatsModule } from './chats/chats.module';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis-service/redis.module';
 
 
 @Module({

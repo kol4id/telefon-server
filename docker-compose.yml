@@ -3,7 +3,7 @@ volumes:
 version: '3'
 services:
   app:
-    image: nestjs-app-env:latest
+    image: nestjs-app:latest
     build: .
     container_name: nestjs-app-env
     ports:

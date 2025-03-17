@@ -8,7 +8,7 @@ import { MessagesModule } from 'src/messages/messages.module';
 import { UserModule } from 'src/user/user.module';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { MediaModule } from 'src/media/media.module';
-import { RedisModule } from 'src/redis/redis.module';
+import { RedisModule } from 'src/redis-service/redis.module';
 import { ChatsModule } from 'src/chats/chats.module';
 
 @Module({
